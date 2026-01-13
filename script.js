@@ -1,11 +1,10 @@
-import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
-import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js";
-
-// SETUP
 const canvas = document.getElementById("scene");
+
+// SCENE
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x111111);
 
+// CAMERA
 const camera = new THREE.PerspectiveCamera(
   60,
   window.innerWidth / window.innerHeight,
@@ -14,18 +13,19 @@ const camera = new THREE.PerspectiveCamera(
 );
 camera.position.set(4, 4, 6);
 
+// RENDERER
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 
 // CONTROLS
-const controls = new OrbitControls(camera, renderer.domElement);
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 
 // LIGHTS
 scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
-dirLight.position.set(5, 10, 5);
-scene.add(dirLight);
+const light = new THREE.DirectionalLight(0xffffff, 0.6);
+light.position.set(5, 10, 5);
+scene.add(light);
 
 // FLOOR
 const floor = new THREE.Mesh(
@@ -38,7 +38,7 @@ scene.add(floor);
 // MATERIAL
 const mat = new THREE.MeshStandardMaterial({ color: 0x888888 });
 
-// CHARACTER GROUP
+// CHARACTER
 const character = new THREE.Group();
 scene.add(character);
 
@@ -52,7 +52,7 @@ head.position.y = 1.1;
 torso.add(head);
 
 // ARM
-function createArm(x) {
+function arm(x) {
   const shoulder = new THREE.Group();
   shoulder.position.set(x, 0.6, 0);
 
@@ -60,44 +60,13 @@ function createArm(x) {
   upper.position.y = -0.4;
   shoulder.add(upper);
 
-  const elbow = new THREE.Group();
-  elbow.position.y = -0.8;
-  upper.add(elbow);
-
-  const lower = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.7, 0.25), mat);
-  lower.position.y = -0.35;
-  elbow.add(lower);
-
   return shoulder;
 }
 
-torso.add(createArm(-0.65));
-torso.add(createArm(0.65));
+torso.add(arm(-0.65));
+torso.add(arm(0.65));
 
-// LEGS
-function createLeg(x) {
-  const hip = new THREE.Group();
-  hip.position.set(x, -0.75, 0);
-
-  const upper = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.9, 0.4), mat);
-  upper.position.y = -0.45;
-  hip.add(upper);
-
-  const knee = new THREE.Group();
-  knee.position.y = -0.9;
-  upper.add(knee);
-
-  const lower = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.8, 0.35), mat);
-  lower.position.y = -0.4;
-  knee.add(lower);
-
-  return hip;
-}
-
-torso.add(createLeg(-0.3));
-torso.add(createLeg(0.3));
-
-// INTERACTION
+// RAYCAST ROTATION
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 let selected = null;
@@ -118,21 +87,21 @@ window.addEventListener("mouseup", () => {
   selected = null;
 });
 
-// SAVE / LOAD
-function serialize(g) {
+// SAVE POSE
+function save(group) {
   return {
-    r: g.rotation.toArray(),
-    c: g.children.map(serialize),
+    r: group.rotation.toArray(),
+    c: group.children.map(save),
   };
 }
 
-function apply(g, d) {
-  g.rotation.fromArray(d.r);
-  g.children.forEach((c, i) => apply(c, d.c[i]));
+function load(group, data) {
+  group.rotation.fromArray(data.r);
+  group.children.forEach((c, i) => load(c, data.c[i]));
 }
 
 document.getElementById("savePose").onclick = () => {
-  const blob = new Blob([JSON.stringify(serialize(character))], { type: "application/json" });
+  const blob = new Blob([JSON.stringify(save(character))], { type: "application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = "pose.json";
@@ -143,7 +112,7 @@ document.getElementById("loadPose").onclick = () =>
   document.getElementById("poseFile").click();
 
 document.getElementById("poseFile").onchange = (e) => {
-  e.target.files[0]?.text().then(t => apply(character, JSON.parse(t)));
+  e.target.files[0]?.text().then(t => load(character, JSON.parse(t)));
 };
 
 // EXPORT PNG
