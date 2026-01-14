@@ -13,6 +13,7 @@ const btnFocus = document.getElementById("btnFocus");
 const btnClear = document.getElementById("btnClear");
 
 const modeRotate = document.getElementById("modeRotate");
+const modeMove = document.getElementById("modeMove");
 const modeOrbit = document.getElementById("modeOrbit");
 
 const axisX = document.getElementById("axisX");
@@ -77,7 +78,7 @@ let lastFrameTime = performance.now();
 let fpsSmoothed = 60;
 
 const STATE = {
-  mode: "rotate",                 // "rotate" | "orbit"
+  mode: "rotate",                 // "rotate" | "move" | "orbit"
   axis: { x: true, y: true, z: true },
   snapDeg: 10,
   showGrid: true,
@@ -104,6 +105,10 @@ function createRenderer() {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
+
+  // ✅ Shadows (quality upgrade)
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
@@ -134,16 +139,38 @@ function createScene() {
   orbit.dampingFactor = 0.06;
   orbit.target.set(0, 1.05, 0);
 
-  scene.add(new THREE.AmbientLight(0xffffff, 0.45));
+  // ✅ Better lighting (quality upgrade)
+  scene.add(new THREE.HemisphereLight(0x9bb2ff, 0x151a22, 0.35));
 
-  const key = new THREE.DirectionalLight(0xffffff, 0.85);
+  const ambient = new THREE.AmbientLight(0xffffff, 0.22);
+  scene.add(ambient);
+
+  const key = new THREE.DirectionalLight(0xffffff, 0.92);
   key.position.set(6, 10, 3);
+  key.castShadow = true;
+
+  // shadow tuning (no acne / decent softness)
+  key.shadow.mapSize.set(2048, 2048);
+  key.shadow.camera.near = 1;
+  key.shadow.camera.far = 40;
+  key.shadow.camera.left = -12;
+  key.shadow.camera.right = 12;
+  key.shadow.camera.top = 12;
+  key.shadow.camera.bottom = -12;
+  key.shadow.bias = -0.00025;
+  key.shadow.normalBias = 0.02;
+
   scene.add(key);
 
-  const fill = new THREE.DirectionalLight(0x88bbff, 0.35);
+  const fill = new THREE.DirectionalLight(0x88bbff, 0.30);
   fill.position.set(-7, 4, -6);
   scene.add(fill);
 
+  const rim = new THREE.DirectionalLight(0xaad9ff, 0.18);
+  rim.position.set(-2, 3, 8);
+  scene.add(rim);
+
+  // Floor
   const floorMat = new THREE.MeshStandardMaterial({
     color: 0x131826,
     metalness: 0.05,
@@ -152,6 +179,7 @@ function createScene() {
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(50, 50), floorMat);
   floor.rotation.x = -Math.PI / 2;
   floor.position.y = 0;
+  floor.receiveShadow = true; // ✅ receive shadows
   scene.add(floor);
 
   gridHelper = new THREE.GridHelper(50, 50, 0x2a3550, 0x1c2436);
@@ -171,8 +199,9 @@ function createScene() {
   gizmo.size = 0.85;
 
   gizmo.addEventListener("dragging-changed", (e) => {
+    // Orbit ONLY when Orbit mode is active, never during gizmo drag
     orbit.enabled = !e.value && (STATE.mode === "orbit");
-    if (e.value) showToast("Rotating…");
+    if (e.value) showToast(STATE.mode === "move" ? "Moving…" : "Rotating…");
   });
 
   scene.add(gizmo);
@@ -211,6 +240,11 @@ function addBox(parent, name, w, h, d, x, y, z, color = 0xb4b8c8) {
   mesh.name = name;
   mesh.position.set(x, y, z);
   mesh.userData.pickable = true;
+
+  // ✅ cast / receive shadows
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+
   parent.add(mesh);
   return mesh;
 }
@@ -286,6 +320,11 @@ function addProp(type) {
   }
 
   mesh.userData.pickable = true;
+
+  // ✅ cast / receive shadows
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+
   base.add(mesh);
 
   base.position.set((Math.random() - 0.5) * 2.0, 0.28, (Math.random() - 0.5) * 2.0);
@@ -387,12 +426,24 @@ function setMode(mode) {
   STATE.mode = mode;
 
   const rotOn = mode === "rotate";
-  modeRotate.classList.toggle("btn--active", rotOn);
-  modeOrbit.classList.toggle("btn--active", !rotOn);
+  const movOn = mode === "move";
+  const orbOn = mode === "orbit";
 
-  gizmo.enabled = rotOn;
-  orbit.enabled = !rotOn;
-  showToast(rotOn ? "Rotate mode" : "Orbit mode");
+  modeRotate.classList.toggle("btn--active", rotOn);
+  modeMove.classList.toggle("btn--active", movOn);
+  modeOrbit.classList.toggle("btn--active", orbOn);
+
+  // Gizmo is active in rotate + move
+  gizmo.enabled = !orbOn;
+  orbit.enabled = orbOn;
+
+  // Switch TransformControls mode
+  gizmo.setMode(movOn ? "translate" : "rotate");
+
+  // Snap only for rotate
+  updateGizmoAxis();
+
+  showToast(rotOn ? "Rotate mode" : movOn ? "Move mode" : "Orbit mode");
 }
 
 function toggleAxis(btn, key) {
@@ -408,7 +459,10 @@ function updateGizmoAxis() {
 
   const snap = Number(rotateSnap.value || STATE.snapDeg);
   STATE.snapDeg = snap;
-  gizmo.setRotationSnap(snap > 0 ? degToRad(snap) : null);
+
+  // Apply rotation snap ONLY in rotate mode
+  if (STATE.mode === "rotate" && snap > 0) gizmo.setRotationSnap(degToRad(snap));
+  else gizmo.setRotationSnap(null);
 }
 
 /* Pose I/O */
@@ -496,7 +550,8 @@ function exportPNG() {
 
 /* Events */
 function onPointerDown(ev) {
-  if (STATE.mode !== "rotate") return;
+  // ✅ allow selection in rotate OR move (not orbit)
+  if (STATE.mode === "orbit") return;
   if (helpModal && !helpModal.classList.contains("hidden")) return;
 
   const obj = pickFromPointer(ev);
@@ -526,6 +581,7 @@ function hookUI() {
   btnClear.addEventListener("click", clearSelection);
 
   modeRotate.addEventListener("click", () => setMode("rotate"));
+  modeMove.addEventListener("click", () => setMode("move"));
   modeOrbit.addEventListener("click", () => setMode("orbit"));
 
   axisX.addEventListener("click", () => toggleAxis(axisX, "x"));
@@ -676,7 +732,7 @@ try {
   setupResizeObserver();
   resizeToCanvas();
 
-  showToast("Ready. Click a joint to pose.");
+  showToast("Ready. Click a joint or prop to pose.");
   tick();
 } catch (err) {
   fatal(err);
