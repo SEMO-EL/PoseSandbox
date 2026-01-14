@@ -487,54 +487,176 @@ function buildCharacter() {
   const root = namedGroup("char_root", 0, 0, 0);
   world.root.add(root);
 
-  const hips = namedGroup("hips", 0, 0.95, 0);
+  /* ===================== HIPS ===================== */
+  const hips = namedGroup("hips", 0, 0.9, 0);
   root.add(hips);
 
-  addBox(hips, "torso_mesh", 1.05, 1.35, 0.55, 0, 0.7, 0, 0xaab0c2);
+  /* ===================== TORSO (slightly shorter) ===================== */
+  addBox(
+    hips,
+    "torso_mesh",
+    1.0,      // width ↓
+    1.15,     // height ↓ (was 1.35)
+    0.55,
+    0,
+    0.6,      // center ↓
+    0,
+    0xaab0c2
+  );
 
-  const chest = namedGroup("chest", 0, 1.4, 0);
+  /* ===================== CHEST ===================== */
+  const chest = namedGroup("chest", 0, 1.15, 0); // lower chest
   hips.add(chest);
 
-  const neck = namedGroup("neck", 0, 0.55, 0);
+  /* ===================== NECK (lowered) ===================== */
+  const neck = namedGroup("neck", 0, 0.38, 0); // closer to torso
   chest.add(neck);
 
-  addBox(neck, "head_mesh", 0.6, 0.62, 0.6, 0, 0.45, 0, 0xc3c8d8);
+  /* ===================== HEAD (closer & slightly smaller) ===================== */
+  addBox(
+    neck,
+    "head_mesh",
+    0.55,     // slightly smaller
+    0.58,
+    0.55,
+    0,
+    0.32,     // closer to neck
+    0,
+    0xc3c8d8
+  );
 
-  const lShoulder = namedGroup("l_shoulder", -0.62, 0.35, 0);
+  /* ===================== SHOULDERS (lower & relaxed) ===================== */
+  const shoulderY = 0.25; // lowered
+  const shoulderX = 0.58; // slightly closer
+
+  const lShoulder = namedGroup("l_shoulder", -shoulderX, shoulderY, 0);
+  const rShoulder = namedGroup("r_shoulder",  shoulderX, shoulderY, 0);
   chest.add(lShoulder);
-  addBox(lShoulder, "l_upperarm_mesh", 0.28, 0.75, 0.28, 0, -0.38, 0, 0x9aa2b8);
-
-  const lElbow = namedGroup("l_elbow", 0, -0.78, 0);
-  lShoulder.add(lElbow);
-  addBox(lElbow, "l_forearm_mesh", 0.25, 0.68, 0.25, 0, -0.34, 0, 0x8c95ab);
-
-  const rShoulder = namedGroup("r_shoulder", 0.62, 0.35, 0);
   chest.add(rShoulder);
-  addBox(rShoulder, "r_upperarm_mesh", 0.28, 0.75, 0.28, 0, -0.38, 0, 0x9aa2b8);
 
-  const rElbow = namedGroup("r_elbow", 0, -0.78, 0);
+  /* ===================== UPPER ARMS (longer & lower) ===================== */
+  addBox(
+    lShoulder,
+    "l_upperarm_mesh",
+    0.26,
+    0.78,     // longer arm
+    0.26,
+    0,
+    -0.45,    // hangs lower
+    0,
+    0x9aa2b8
+  );
+
+  addBox(
+    rShoulder,
+    "r_upperarm_mesh",
+    0.26,
+    0.78,
+    0.26,
+    0,
+    -0.45,
+    0,
+    0x9aa2b8
+  );
+
+  /* ===================== ELBOWS ===================== */
+  const lElbow = namedGroup("l_elbow", 0, -0.85, 0);
+  const rElbow = namedGroup("r_elbow", 0, -0.85, 0);
+  lShoulder.add(lElbow);
   rShoulder.add(rElbow);
-  addBox(rElbow, "r_forearm_mesh", 0.25, 0.68, 0.25, 0, -0.34, 0, 0x8c95ab);
 
-  const lHip = namedGroup("l_hip", -0.30, 0.05, 0);
+  /* ===================== FOREARMS ===================== */
+  addBox(
+    lElbow,
+    "l_forearm_mesh",
+    0.24,
+    0.72,
+    0.24,
+    0,
+    -0.38,
+    0,
+    0x8c95ab
+  );
+
+  addBox(
+    rElbow,
+    "r_forearm_mesh",
+    0.24,
+    0.72,
+    0.24,
+    0,
+    -0.38,
+    0,
+    0x8c95ab
+  );
+
+  /* ===================== HIPS / LEGS ===================== */
+  const hipX = 0.28;
+
+  const lHip = namedGroup("l_hip", -hipX, 0.02, 0);
+  const rHip = namedGroup("r_hip",  hipX, 0.02, 0);
   hips.add(lHip);
-  addBox(lHip, "l_thigh_mesh", 0.35, 0.92, 0.35, 0, -0.46, 0, 0x8792aa);
-
-  const lKnee = namedGroup("l_knee", 0, -0.92, 0);
-  lHip.add(lKnee);
-  addBox(lKnee, "l_shin_mesh", 0.32, 0.82, 0.32, 0, -0.41, 0, 0x7b86a0);
-
-  const rHip = namedGroup("r_hip", 0.30, 0.05, 0);
   hips.add(rHip);
-  addBox(rHip, "r_thigh_mesh", 0.35, 0.92, 0.35, 0, -0.46, 0, 0x8792aa);
 
-  const rKnee = namedGroup("r_knee", 0, -0.92, 0);
+  addBox(
+    lHip,
+    "l_thigh_mesh",
+    0.34,
+    0.95,
+    0.34,
+    0,
+    -0.48,
+    0,
+    0x8792aa
+  );
+
+  addBox(
+    rHip,
+    "r_thigh_mesh",
+    0.34,
+    0.95,
+    0.34,
+    0,
+    -0.48,
+    0,
+    0x8792aa
+  );
+
+  /* ===================== KNEES ===================== */
+  const lKnee = namedGroup("l_knee", 0, -0.95, 0);
+  const rKnee = namedGroup("r_knee", 0, -0.95, 0);
+  lHip.add(lKnee);
   rHip.add(rKnee);
-  addBox(rKnee, "r_shin_mesh", 0.32, 0.82, 0.32, 0, -0.41, 0, 0x7b86a0);
 
+  addBox(
+    lKnee,
+    "l_shin_mesh",
+    0.30,
+    0.85,
+    0.30,
+    0,
+    -0.42,
+    0,
+    0x7b86a0
+  );
+
+  addBox(
+    rKnee,
+    "r_shin_mesh",
+    0.30,
+    0.85,
+    0.30,
+    0,
+    -0.42,
+    0,
+    0x7b86a0
+  );
+
+  /* ===================== FINAL ===================== */
   root.position.y = 0.01;
   scene.add(world.root);
 }
+
 
 /* Props */
 function addProp(type) {
