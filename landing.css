@@ -1,248 +1,909 @@
-/* ===================== RESET ===================== */
-* {
-  margin: 0;
-  padding: 0;
+/* ==========================================================================
+   PoseSandbox — Landing Page Styles (landing.css)
+   ==========================================================================
+   IMPORTANT:
+     - This file is for index.html ONLY.
+     - Do not link landing.css inside app.html.
+     - We scope everything under .landing to avoid collisions.
+   ========================================================================== */
+
+/* =========================
+   1) Variables / Theme
+   ========================= */
+:root {
+  --ps-bg: #0b0f17;
+  --ps-bg2: #0f1625;
+  --ps-panel: rgba(18, 24, 38, 0.82);
+  --ps-panel-2: rgba(18, 24, 38, 0.55);
+  --ps-border: rgba(255, 255, 255, 0.10);
+
+  --ps-text: rgba(255, 255, 255, 0.92);
+  --ps-muted: rgba(255, 255, 255, 0.66);
+  --ps-muted2: rgba(255, 255, 255, 0.46);
+
+  --ps-accent: #7c5cff;
+  --ps-accent2: #24d2ff;
+  --ps-danger: #ff3b6b;
+
+  --ps-radius: 18px;
+  --ps-radius2: 24px;
+  --ps-shadow: 0 18px 60px rgba(0,0,0,0.45);
+  --ps-shadow2: 0 12px 30px rgba(0,0,0,0.35);
+
+  --ps-gap: 16px;
+  --ps-pad: 16px;
+
+  --ps-font: "Inter", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+
+  --ps-max: 1180px;
+  --ps-topbar-h: 68px;
+}
+
+/* =========================
+   2) Reset + Base
+   ========================= */
+.landing,
+.landing * {
   box-sizing: border-box;
 }
 
-html {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
-  background: #0b0f17;
-  color: #e6e8ee;
+html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
 }
 
-a {
-  text-decoration: none;
+body.landing {
+  font-family: var(--ps-font);
+  color: var(--ps-text);
+
+  background:
+    radial-gradient(1200px 650px at 15% -10%, rgba(124, 92, 255, 0.35), transparent 60%),
+    radial-gradient(900px 520px at 90% 0%, rgba(36, 210, 255, 0.22), transparent 55%),
+    radial-gradient(900px 700px at 10% 100%, rgba(255, 59, 107, 0.12), transparent 55%),
+    linear-gradient(180deg, var(--ps-bg), var(--ps-bg2));
+
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.landing a {
   color: inherit;
+  text-decoration: none;
 }
 
-/* ===================== NAV ===================== */
-.nav {
+.landing code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid rgba(255,255,255,0.10);
+}
+
+/* =========================
+   3) Accessibility
+   ========================= */
+.landing__skip {
+  position: absolute;
+  left: -9999px;
+  top: 8px;
+  z-index: 9999;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(0,0,0,0.75);
+}
+
+.landing__skip:focus {
+  left: 10px;
+  outline: none;
+}
+
+/* =========================
+   4) Layout Helpers
+   ========================= */
+.landing__main {
+  min-height: 100vh;
+}
+
+.landing__section {
+  padding: 54px 18px;
+}
+
+.landing__sectionHead {
+  max-width: var(--ps-max);
+  margin: 0 auto 26px auto;
+}
+
+.landing__divider {
+  height: 1px;
+  width: min(var(--ps-max), calc(100% - 36px));
+  margin: 38px auto 0 auto;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent);
+}
+
+/* Type */
+.landing__eyebrow {
+  margin: 0 0 10px 0;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  font-size: 12px;
+  color: rgba(255,255,255,0.72);
+}
+
+.landing__headline {
+  margin: 0 0 14px 0;
+  font-size: clamp(30px, 4vw, 52px);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  font-weight: 900;
+}
+
+.landing__grad {
+  background: linear-gradient(135deg, rgba(124,92,255,1), rgba(36,210,255,1));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.landing__subhead {
+  margin: 0 0 18px 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--ps-muted);
+  max-width: 62ch;
+}
+
+.landing__h2 {
+  margin: 0 0 10px 0;
+  font-size: clamp(22px, 2.3vw, 34px);
+  letter-spacing: -0.02em;
+  font-weight: 900;
+}
+
+.landing__h3 {
+  margin: 0 0 10px 0;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  font-weight: 900;
+}
+
+.landing__p {
+  margin: 0;
+  color: var(--ps-muted);
+  line-height: 1.55;
+  max-width: 75ch;
+}
+
+.landing__pSmall {
+  margin: 0 0 12px 0;
+  color: var(--ps-muted);
+  line-height: 1.5;
+  font-size: 13px;
+}
+
+.landing__micro {
+  font-size: 12px;
+  color: rgba(255,255,255,0.70);
+  line-height: 1.45;
+  margin-top: 12px;
+}
+
+.landing__micro--muted {
+  color: rgba(255,255,255,0.50);
+}
+
+/* =========================
+   5) Topbar
+   ========================= */
+.landing__topbar {
+  height: var(--ps-topbar-h);
   position: sticky;
   top: 0;
-  z-index: 100;
-  background: rgba(11, 15, 23, 0.9);
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid #1e2433;
-}
+  z-index: 1000;
 
-.nav-inner {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 16px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+
+  padding: 10px 16px;
+
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  backdrop-filter: blur(16px);
+  background: rgba(10, 14, 22, 0.35);
 }
 
-.logo {
-  font-weight: 700;
-  font-size: 1.1rem;
-}
-
-.nav-links {
+.landing__brandLink {
   display: flex;
-  gap: 16px;
+  align-items: center;
+  gap: 12px;
+}
+
+.landing__logo {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+
+  display: grid;
+  place-items: center;
+
+  background: linear-gradient(135deg, rgba(124,92,255,0.95), rgba(36,210,255,0.80));
+  box-shadow: 0 12px 30px rgba(124,92,255,0.22);
+  color: rgba(0,0,0,0.85);
+  font-weight: 1000;
+  font-size: 16px;
+}
+
+.landing__brandText {
+  display: grid;
+  gap: 2px;
+}
+
+.landing__brandTitle {
+  font-weight: 900;
+  letter-spacing: 0.2px;
+  font-size: 14px;
+}
+
+.landing__brandTag {
+  font-size: 12px;
+  color: var(--ps-muted);
+}
+
+.landing__nav {
+  display: flex;
+  gap: 14px;
   align-items: center;
 }
 
-/* ===================== BUTTONS ===================== */
-.btn-primary {
-  background: #4f7cff;
-  color: #fff;
-  padding: 10px 16px;
-  border-radius: 8px;
-  font-weight: 600;
+.landing__navLink {
+  font-size: 13px;
+  color: rgba(255,255,255,0.78);
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
 }
 
-.btn-secondary {
-  border: 1px solid #4f7cff;
-  color: #4f7cff;
-  padding: 10px 16px;
-  border-radius: 8px;
-  font-weight: 600;
+.landing__navLink:hover {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.08);
+  transform: translateY(-1px);
 }
 
-.btn-primary.large,
-.btn-secondary.large {
-  padding: 14px 24px;
-  font-size: 1rem;
-}
-
-.btn-primary.small {
-  padding: 8px 14px;
-  font-size: 0.9rem;
-}
-
-.btn-disabled {
-  background: #2a3145;
-  color: #8a90a5;
-  border: none;
-  padding: 10px 16px;
-  border-radius: 8px;
-}
-
-/* ===================== HERO ===================== */
-.hero {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 80px 24px;
-  display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 48px;
-}
-
-.hero h1 {
-  font-size: 3rem;
-  line-height: 1.1;
-}
-
-.hero h1 span {
-  color: #4f7cff;
-}
-
-.hero p {
-  margin-top: 20px;
-  font-size: 1.1rem;
-  color: #b6bdd3;
-  max-width: 520px;
-}
-
-.hero-buttons {
-  margin-top: 32px;
+.landing__actions {
   display: flex;
-  gap: 16px;
+  gap: 10px;
+  align-items: center;
 }
 
-.fake-preview {
-  background: linear-gradient(135deg, #1b2133, #121826);
-  border-radius: 16px;
-  height: 360px;
-  display: flex;
+/* =========================
+   6) Buttons
+   ========================= */
+.landing__btn {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #6f7aa3;
-  font-weight: 600;
+
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.24);
+
+  padding: 10px 12px;
+  border-radius: 14px;
+
+  cursor: pointer;
+  font-weight: 800;
+  font-size: 13px;
+
+  transition: transform 120ms ease, background 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+  user-select: none;
+  white-space: nowrap;
 }
 
-/* ===================== SECTIONS ===================== */
-.section {
-  max-width: 1200px;
+.landing__btn:hover {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.16);
+  transform: translateY(-1px);
+}
+
+.landing__btn:active {
+  transform: translateY(0px);
+}
+
+.landing__btn--primary {
+  border-color: rgba(124,92,255,0.55);
+  background: linear-gradient(135deg, rgba(124,92,255,0.90), rgba(36,210,255,0.42));
+  box-shadow: 0 14px 32px rgba(124,92,255,0.20);
+}
+
+.landing__btn--ghost {
+  background: rgba(255,255,255,0.06);
+}
+
+.landing__btn--big {
+  padding: 12px 14px;
+  border-radius: 16px;
+  font-size: 14px;
+}
+
+.landing__btn--wide {
+  width: 100%;
+}
+
+/* =========================
+   7) Hero
+   ========================= */
+.landing__hero {
+  padding: 54px 18px 26px 18px;
+}
+
+.landing__heroGrid {
+  max-width: var(--ps-max);
   margin: 0 auto;
-  padding: 80px 24px;
-}
 
-.section.alt {
-  background: #0f1422;
-}
-
-.section h2 {
-  font-size: 2.2rem;
-  margin-bottom: 16px;
-}
-
-.section-sub {
-  color: #b6bdd3;
-  margin-bottom: 40px;
-}
-
-/* ===================== FEATURES ===================== */
-.features-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 24px;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 22px;
+  align-items: start;
 }
 
-.feature-card {
-  background: #141a2a;
-  border: 1px solid #1f2640;
+.landing__heroText {
+  padding: 6px 2px;
+}
+
+.landing__ctaRow {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 14px 0 10px 0;
+}
+
+.landing__metaRow {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.landing__pill {
+  font-size: 12px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(0,0,0,0.22);
+  color: rgba(255,255,255,0.82);
+}
+
+.landing__note {
+  margin-top: 14px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(255,255,255,0.62);
+  max-width: 72ch;
+}
+
+/* =========================
+   8) Hero Card (Preview)
+   ========================= */
+.landing__heroCard {
+  border-radius: var(--ps-radius2);
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(18, 24, 38, 0.72);
+  box-shadow: var(--ps-shadow);
+  backdrop-filter: blur(16px);
+  overflow: hidden;
+}
+
+.landing__heroCardTop {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  background: rgba(0,0,0,0.20);
+}
+
+.landing__fakeWindowDots {
+  display: flex;
+  gap: 6px;
+}
+
+.landing__fakeWindowDots span {
+  width: 9px;
+  height: 9px;
+  border-radius: 99px;
+  background: rgba(255,255,255,0.20);
+}
+
+.landing__fakeWindowTitle {
+  font-size: 12px;
+  color: rgba(255,255,255,0.72);
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+
+.landing__heroCardBody {
+  padding: 14px;
+}
+
+/* =========================
+   9) CSS-only mannequin
+   ========================= */
+.landing__mannequin {
+  position: relative;
+  height: 220px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.08);
+
+  background:
+    radial-gradient(120px 80px at 50% 25%, rgba(124,92,255,0.20), transparent 60%),
+    radial-gradient(160px 120px at 55% 40%, rgba(36,210,255,0.16), transparent 60%),
+    linear-gradient(180deg, rgba(0,0,0,0.22), rgba(0,0,0,0.12));
+
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03);
+}
+
+.m__shadow {
+  position: absolute;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  width: 150px;
+  height: 30px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.35);
+  filter: blur(8px);
+}
+
+.m__torso,
+.m__head,
+.m__arm,
+.m__leg,
+.m__prop {
+  position: absolute;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06));
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow: 0 10px 22px rgba(0,0,0,0.25);
+}
+
+.m__torso {
+  left: 50%;
+  top: 64px;
+  transform: translateX(-50%);
+  width: 64px;
+  height: 92px;
   border-radius: 16px;
-  padding: 24px;
 }
 
-/* ===================== PACKS ===================== */
-.packs-grid {
+.m__head {
+  left: 50%;
+  top: 34px;
+  transform: translateX(-50%);
+  width: 42px;
+  height: 42px;
+  border-radius: 18px;
+}
+
+.m__arm--l {
+  left: 50%;
+  top: 78px;
+  width: 18px;
+  height: 72px;
+  transform: translateX(-72px) rotate(12deg);
+  border-radius: 12px;
+}
+
+.m__arm--r {
+  left: 50%;
+  top: 78px;
+  width: 18px;
+  height: 72px;
+  transform: translateX(54px) rotate(-14deg);
+  border-radius: 12px;
+}
+
+.m__leg--l {
+  left: 50%;
+  top: 150px;
+  width: 22px;
+  height: 78px;
+  transform: translateX(-28px) rotate(2deg);
+  border-radius: 12px;
+}
+
+.m__leg--r {
+  left: 50%;
+  top: 150px;
+  width: 22px;
+  height: 78px;
+  transform: translateX(8px) rotate(-2deg);
+  border-radius: 12px;
+}
+
+.m__prop {
+  left: 50%;
+  top: 164px;
+  width: 30px;
+  height: 30px;
+  transform: translateX(60px) rotate(10deg);
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(36,210,255,0.55), rgba(124,92,255,0.25));
+}
+
+/* =========================
+   10) Hero stats
+   ========================= */
+.landing__heroStatGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 24px;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 14px 0 12px 0;
 }
 
-.pack-card {
-  background: #141a2a;
-  border: 1px solid #1f2640;
+.landing__stat {
+  padding: 10px 12px;
   border-radius: 16px;
-  padding: 24px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(0,0,0,0.18);
+}
+
+.landing__statK {
+  font-size: 12px;
+  color: rgba(255,255,255,0.65);
+  margin-bottom: 4px;
+}
+
+.landing__statV {
+  font-size: 13px;
+  font-weight: 900;
+  color: rgba(255,255,255,0.88);
+}
+
+.landing__heroCardCtas {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+/* =========================
+   11) Cards (Features)
+   ========================= */
+.landing__cards {
+  max-width: var(--ps-max);
+  margin: 0 auto;
+
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.landing__card {
+  border-radius: var(--ps-radius2);
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(18, 24, 38, 0.72);
+  box-shadow: var(--ps-shadow2);
+  padding: 16px;
+  backdrop-filter: blur(16px);
+  min-height: 180px;
+
+  transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+
+.landing__card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255,255,255,0.14);
+  background: rgba(18, 24, 38, 0.78);
+}
+
+.landing__list {
+  margin: 0;
+  padding-left: 18px;
+  color: rgba(255,255,255,0.78);
+  font-size: 13px;
+  line-height: 1.5;
+  display: grid;
+  gap: 6px;
+}
+
+/* =========================
+   12) Split panels
+   ========================= */
+.landing__split {
+  max-width: var(--ps-max);
+  margin: 0 auto;
+
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.landing__panel {
+  border-radius: var(--ps-radius2);
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(18, 24, 38, 0.68);
+  box-shadow: var(--ps-shadow2);
+  padding: 18px;
+  backdrop-filter: blur(16px);
+}
+
+.landing__bullets {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.landing__bullet {
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(0,0,0,0.18);
+  color: rgba(255,255,255,0.80);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+/* =========================
+   13) Pricing
+   ========================= */
+.landing__pricingGrid {
+  max-width: var(--ps-max);
+  margin: 0 auto;
+
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.landing__priceCard {
+  border-radius: var(--ps-radius2);
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(18, 24, 38, 0.70);
+  box-shadow: var(--ps-shadow2);
+  padding: 18px;
+  backdrop-filter: blur(16px);
+
+  display: grid;
+  gap: 10px;
+
+  transition: transform 140ms ease, border-color 140ms ease;
+}
+
+.landing__priceCard:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255,255,255,0.14);
+}
+
+.landing__priceTop {
   display: flex;
-  flex-direction: column;
+  align-items: baseline;
   justify-content: space-between;
+  gap: 12px;
 }
 
-.pack-card.highlight {
-  border-color: #4f7cff;
+.landing__price {
+  font-weight: 1000;
+  font-size: 24px;
+  letter-spacing: -0.02em;
 }
 
-.pack-card ul {
-  margin: 16px 0;
-  padding-left: 16px;
+.landing__priceCard--pro {
+  border-color: rgba(124,92,255,0.34);
+  background:
+    radial-gradient(420px 220px at 20% 0%, rgba(124,92,255,0.16), transparent 60%),
+    radial-gradient(420px 220px at 90% 0%, rgba(36,210,255,0.12), transparent 60%),
+    rgba(18, 24, 38, 0.72);
 }
 
-.pack-footer {
+.landing__priceCard--studio {
+  border-color: rgba(36,210,255,0.28);
+}
+
+/* =========================
+   14) FAQ
+   ========================= */
+.landing__faq {
+  max-width: var(--ps-max);
+  margin: 0 auto;
+  display: grid;
+  gap: 10px;
+}
+
+.landing__faqItem {
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(18, 24, 38, 0.66);
+  box-shadow: var(--ps-shadow2);
+  backdrop-filter: blur(16px);
+  overflow: hidden;
+}
+
+.landing__faqQ {
+  padding: 14px 16px;
+  cursor: pointer;
+  font-weight: 900;
+  color: rgba(255,255,255,0.88);
+  list-style: none;
+}
+
+.landing__faqQ::-webkit-details-marker {
+  display: none;
+}
+
+.landing__faqA {
+  padding: 0 16px 14px 16px;
+  color: rgba(255,255,255,0.74);
+  line-height: 1.5;
+  font-size: 13px;
+}
+
+/* =========================
+   15) Final CTA
+   ========================= */
+.landing__finalCta {
+  max-width: var(--ps-max);
+  margin: 26px auto 0 auto;
+  border-radius: var(--ps-radius2);
+  border: 1px solid rgba(255,255,255,0.10);
+
+  background:
+    radial-gradient(520px 260px at 20% 10%, rgba(124,92,255,0.20), transparent 55%),
+    radial-gradient(520px 260px at 85% 10%, rgba(36,210,255,0.15), transparent 55%),
+    rgba(18, 24, 38, 0.72);
+
+  box-shadow: var(--ps-shadow);
+  backdrop-filter: blur(16px);
+  padding: 20px;
+}
+
+.landing__finalCtaInner {
+  display: grid;
+  gap: 10px;
+}
+
+/* =========================
+   16) Footer
+   ========================= */
+.landing__footer {
+  padding: 26px 18px 60px 18px;
+}
+
+.landing__footerGrid {
+  max-width: var(--ps-max);
+  margin: 0 auto;
+
+  border-radius: var(--ps-radius2);
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(10, 14, 22, 0.35);
+  backdrop-filter: blur(16px);
+
+  box-shadow: var(--ps-shadow2);
+
+  padding: 18px;
+
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1.1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+.landing__footBrand {
   display: flex;
-  justify-content: space-between;
+  gap: 12px;
   align-items: center;
 }
 
-.price {
-  font-weight: 700;
-}
-
-/* ===================== PRO ===================== */
-.pro-grid {
+.landing__footLogo {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 24px;
+  place-items: center;
+  background: linear-gradient(135deg, rgba(124,92,255,0.95), rgba(36,210,255,0.80));
+  box-shadow: 0 14px 30px rgba(124,92,255,0.18);
+  color: rgba(0,0,0,0.85);
+  font-weight: 1000;
 }
 
-.pro-card {
-  background: #141a2a;
-  border-radius: 16px;
-  padding: 24px;
-  border: 1px solid #1f2640;
+.landing__footTitle {
+  font-weight: 1000;
 }
 
-/* ===================== CTA ===================== */
-.cta {
-  text-align: center;
-  padding: 80px 24px;
-  background: linear-gradient(180deg, #0f1422, #0b0f17);
+.landing__footSub {
+  font-size: 12px;
+  color: rgba(255,255,255,0.62);
+  margin-top: 2px;
 }
 
-.cta h2 {
-  font-size: 2.4rem;
-  margin-bottom: 12px;
+.landing__footLinks {
+  display: grid;
+  gap: 8px;
 }
 
-.cta p {
-  color: #b6bdd3;
-  margin-bottom: 24px;
+.landing__footLink {
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(0,0,0,0.18);
+  color: rgba(255,255,255,0.78);
+  font-weight: 800;
+  font-size: 13px;
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
 }
 
-/* ===================== FOOTER ===================== */
-.footer {
-  text-align: center;
-  padding: 24px;
-  color: #7f879e;
-  border-top: 1px solid #1f2640;
+.landing__footLink:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
 }
 
-/* ===================== RESPONSIVE ===================== */
-@media (max-width: 900px) {
-  .hero {
+.landing__footLegal {
+  display: grid;
+  gap: 8px;
+  justify-items: end;
+  text-align: right;
+}
+
+/* =========================
+   17) Responsive
+   ========================= */
+@media (max-width: 1020px) {
+  .landing__heroGrid {
     grid-template-columns: 1fr;
   }
 
-  .hero-visual {
-    order: -1;
+  .landing__cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .landing__pricingGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .landing__footerGrid {
+    grid-template-columns: 1fr;
+    text-align: left;
+  }
+
+  .landing__footLegal {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .landing__nav {
+    display: none;
+  }
+}
+
+@media (max-width: 620px) {
+  .landing__cards {
+    grid-template-columns: 1fr;
+  }
+
+  .landing__split {
+    grid-template-columns: 1fr;
+  }
+
+  .landing__actions {
+    gap: 8px;
+  }
+
+  .landing__btn {
+    padding: 10px 10px;
+  }
+}
+
+/* =========================
+   18) Reduced motion
+   ========================= */
+@media (prefers-reduced-motion: reduce) {
+  .landing__btn,
+  .landing__card,
+  .landing__priceCard,
+  .landing__navLink,
+  .landing__footLink {
+    transition: none !important;
   }
 }
