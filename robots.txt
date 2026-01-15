@@ -1,0 +1,7 @@
+# PoseSandbox robots.txt
+# Allow all crawlers.
+User-agent: *
+Allow: /
+
+# Sitemap location (GitHub Pages)
+Sitemap: https://semo-el.github.io/sandbox-test/sitemap.xml
