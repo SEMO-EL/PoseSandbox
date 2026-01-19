@@ -6,17 +6,34 @@
 // - world: { joints: Group[], props: Group[] }
 // - scene: THREE.Scene
 // - poseNotesEl: <textarea> (optional)
-// - addProp(type): (type:"cube"|"sphere") => creates a prop and pushes into world.props + scene.add
+// - addProp(type): (type:string) => creates a prop and pushes into world.props + scene.add
 // - showToast(msg, ms)
 // - updateOutline(): refresh outline helper
 // - forceRenderOnce(): (optional) one immediate render after applying
 // - resetAllJointRotations(): (optional but recommended)
 //
 // It also provides importPosePack(files, {applyPose, saveToGallery, renderGallery, showToast})
-// (this matches your "import many json files" goal — creates thumbnails automatically)
 
 export function nowISO() {
   return new Date().toISOString();
+}
+
+/** @param {any} p */
+function inferTypeFromLegacyName(p) {
+  const n = String(p?.name || "").toLowerCase();
+  if (n.includes("sphere")) return "sphere";
+  if (n.includes("cube") || n.includes("box")) return "cube";
+  if (n.includes("cyl")) return "cylinder";
+  if (n.includes("cone")) return "cone";
+  if (n.includes("torus")) return "torus";
+  if (n.includes("ring")) return "ring";
+  if (n.includes("disc") || n.includes("circle")) return "disc";
+  if (n.includes("plane")) return "plane";
+  if (n.includes("icosa")) return "icosa";
+  if (n.includes("octa")) return "octa";
+  if (n.includes("dodeca")) return "dodeca";
+  if (n.includes("tetra")) return "tetra";
+  return "cube";
 }
 
 /* ---------------- Pose Serialize ---------------- */
@@ -30,7 +47,8 @@ export function serializePose({ world, poseNotesEl }) {
   });
 
   const props = world.props.map((p) => ({
-    name: p.name,
+    type: String(p?.userData?.type || inferTypeFromLegacyName(p)),
+    name: p?.name || "",
     position: p.position.toArray(),
     quaternion: p.quaternion.toArray(),
     scale: p.scale.toArray()
@@ -78,15 +96,18 @@ export function applyPose(data, deps) {
 
     // add new
     data.props.forEach((pd) => {
-      const isCube = String(pd?.name || "").toLowerCase().includes("cube");
-      if (typeof addProp !== "function") {
-        // fallback: skip creation if addProp missing
-        return;
-      }
-      addProp(isCube ? "cube" : "sphere");
+      if (typeof addProp !== "function") return;
+
+      const t = String(pd?.type || "").trim().toLowerCase() || inferTypeFromLegacyName(pd);
+      addProp(t);
 
       const p = world.props[world.props.length - 1];
       if (!p) return;
+
+      // keep type for future serializations
+      if (!p.userData) p.userData = {};
+      p.userData.type = t;
+      p.userData.isProp = true;
 
       if (pd.position) p.position.fromArray(pd.position);
       if (pd.quaternion) p.quaternion.fromArray(pd.quaternion);
