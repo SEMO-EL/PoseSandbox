@@ -1,6 +1,6 @@
-// controls/InputManager.js
+// controls/input.js
 // Centralizes pointer + keyboard input, and emits events.
-// This file is NEW and does NOT duplicate your other files.
+// ALSO wires UI buttons (props) to app-provided callbacks (additive, no refactor).
 
 export class InputManager {
   /**
@@ -230,5 +230,54 @@ export class InputManager {
     this.pointer.pointerId = null;
     this.keys.clear();
     this._emit("blur", { type: "blur" });
+  }
+}
+
+/**
+ * Bind prop buttons to an app-provided addProp(type) function.
+ *
+ * This is additive: it does NOT assume where addProp lives; app.js injects it.
+ *
+ * @param {{
+ *   addProp: (type:string)=>any,
+ *   selectObject?: (obj:any)=>void,
+ *   showToast?: (msg:string, ms?:number)=>void
+ * }} deps
+ */
+export function bindPropButtons(deps) {
+  const addProp = deps?.addProp;
+  if (typeof addProp !== "function") {
+    console.warn("bindPropButtons: deps.addProp is missing (props buttons won’t spawn anything)");
+    return;
+  }
+
+  const selectObject = deps?.selectObject;
+  const showToast = deps?.showToast;
+
+  const buttons = [
+    ["btnAddCube", "cube"],
+    ["btnAddSphere", "sphere"],
+    ["btnAddCylinder", "cylinder"],
+    ["btnAddCone", "cone"],
+    ["btnAddPyramid", "pyramid"],
+    ["btnAddTorus", "torus"],
+    ["btnAddRing", "ring"],
+    ["btnAddDisc", "disc"],
+    ["btnAddIcosa", "icosa"],
+    ["btnAddOcta", "octa"],
+    ["btnAddDodeca", "dodeca"],
+    ["btnAddTetra", "tetra"],
+    ["btnAddPlane", "plane"]
+  ];
+
+  for (const [id, type] of buttons) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+
+    el.addEventListener("click", () => {
+      const obj = addProp(type);
+      if (typeof selectObject === "function" && obj) selectObject(obj);
+      if (typeof showToast === "function") showToast(`Added ${type}`);
+    });
   }
 }
