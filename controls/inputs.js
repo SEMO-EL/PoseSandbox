@@ -1,4 +1,4 @@
-// controls/InputManager.js
+// controls/Inputs.js
 // Centralizes pointer + keyboard input, and emits events.
 // This file is NEW and does NOT duplicate your other files.
 
