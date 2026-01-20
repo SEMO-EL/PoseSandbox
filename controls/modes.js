@@ -1,5 +1,5 @@
-// controls/Modes.js
-// Owns: mode switching (rotate/move/orbit), axis locks, rotate snap.
+// controls/modes.js
+// Owns: mode switching (rotate/move/orbit/scale), axis locks, rotate snap.
 // Does NOT duplicate other files. Designed to be used by Engine/App glue.
 
 export class ModesController {
@@ -9,6 +9,7 @@ export class ModesController {
    *  modeRotateBtn: HTMLElement,
    *  modeMoveBtn: HTMLElement,
    *  modeOrbitBtn: HTMLElement,
+   *  modeScaleBtn?: HTMLElement|null,
    *  axisXBtn: HTMLElement,
    *  axisYBtn: HTMLElement,
    *  axisZBtn: HTMLElement,
@@ -27,6 +28,7 @@ export class ModesController {
       modeRotate: opts.modeRotateBtn,
       modeMove: opts.modeMoveBtn,
       modeOrbit: opts.modeOrbitBtn,
+      modeScale: opts.modeScaleBtn || null,
       axisX: opts.axisXBtn,
       axisY: opts.axisYBtn,
       axisZ: opts.axisZBtn,
@@ -38,24 +40,25 @@ export class ModesController {
     this.toast = typeof opts.toast === "function" ? opts.toast : null;
 
     this.state = {
-      mode: "rotate", // "rotate" | "move" | "orbit"
+      mode: "rotate", // "rotate" | "move" | "orbit" | "scale"
       axis: { x: true, y: true, z: true },
       snapDeg: 10
     };
 
     this._bindUI();
-    this.applyState(); // sync to initial
-  }
-
-  destroy() {
-    // If you ever need: remove listeners (kept simple; not required for your current SPA)
+    this.applyState();
   }
 
   setMode(mode) {
-    if (mode !== "rotate" && mode !== "move" && mode !== "orbit") return;
+    if (mode !== "rotate" && mode !== "move" && mode !== "orbit" && mode !== "scale") return;
     this.state.mode = mode;
     this.applyState();
-    this._toast(mode === "rotate" ? "Rotate mode" : mode === "move" ? "Move mode" : "Orbit mode");
+    this._toast(
+      mode === "rotate" ? "Rotate mode"
+        : mode === "move" ? "Move mode"
+        : mode === "orbit" ? "Orbit mode"
+        : "Scale mode"
+    );
   }
 
   toggleAxis(key) {
@@ -70,9 +73,6 @@ export class ModesController {
     this.applyState();
   }
 
-  /**
-   * Apply state to TransformControls + OrbitControls + UI classes.
-   */
   applyState() {
     const { mode, axis, snapDeg } = this.state;
 
@@ -80,18 +80,24 @@ export class ModesController {
     this._toggleClass(this.ui.modeRotate, "btn--active", mode === "rotate");
     this._toggleClass(this.ui.modeMove, "btn--active", mode === "move");
     this._toggleClass(this.ui.modeOrbit, "btn--active", mode === "orbit");
+    this._toggleClass(this.ui.modeScale, "btn--active", mode === "scale");
 
     // axis chips
     this._toggleClass(this.ui.axisX, "chip--active", !!axis.x);
     this._toggleClass(this.ui.axisY, "chip--active", !!axis.y);
     this._toggleClass(this.ui.axisZ, "chip--active", !!axis.z);
 
-    // controls enable/disable
     const orbOn = mode === "orbit";
+
     if (this.gizmo) {
       this.gizmo.enabled = !orbOn;
-      this.gizmo.setMode(mode === "move" ? "translate" : "rotate");
 
+      // TransformControls modes
+      if (mode === "move") this.gizmo.setMode("translate");
+      else if (mode === "scale") this.gizmo.setMode("scale");
+      else this.gizmo.setMode("rotate");
+
+      // axis vis
       this.gizmo.showX = !!axis.x;
       this.gizmo.showY = !!axis.y;
       this.gizmo.showZ = !!axis.z;
@@ -104,51 +110,45 @@ export class ModesController {
       }
     }
 
-    if (this.orbit) {
-      this.orbit.enabled = orbOn;
-    }
+    if (this.orbit) this.orbit.enabled = orbOn;
 
-    // keep select UI value in sync
+    // keep select UI in sync
     if (this.ui.rotateSnap && String(this.ui.rotateSnap.value) !== String(snapDeg)) {
-      // only set if mismatch to avoid moving user selection unexpectedly
-      // but initial might be different -> align with current state
       this.ui.rotateSnap.value = String(snapDeg);
     }
   }
 
   /**
-   * Helper for keyboard shortcuts (your app.js uses 1/2/3).
+   * Keyboard shortcuts: 1/2/3/4
    * @param {string} keyLower
    */
   handleShortcut(keyLower) {
     if (keyLower === "1") this.setMode("rotate");
     else if (keyLower === "2") this.setMode("move");
     else if (keyLower === "3") this.setMode("orbit");
+    else if (keyLower === "4") this.setMode("scale");
   }
 
   _bindUI() {
-    // modes
     this.ui.modeRotate?.addEventListener("click", () => this.setMode("rotate"));
     this.ui.modeMove?.addEventListener("click", () => this.setMode("move"));
     this.ui.modeOrbit?.addEventListener("click", () => this.setMode("orbit"));
+    this.ui.modeScale?.addEventListener("click", () => this.setMode("scale"));
 
-    // axis
     this.ui.axisX?.addEventListener("click", () => this.toggleAxis("x"));
     this.ui.axisY?.addEventListener("click", () => this.toggleAxis("y"));
     this.ui.axisZ?.addEventListener("click", () => this.toggleAxis("z"));
 
-    // snap
     this.ui.rotateSnap?.addEventListener("change", () => {
       const v = Number(this.ui.rotateSnap.value || 0);
       this.setSnapDeg(v);
     });
 
-    // TransformControls dragging -> disable orbit during drag (matches your current logic)
+    // disable orbit during gizmo drag, but only enable orbit if orbit mode is active
     if (this.gizmo && this.orbit) {
       this.gizmo.addEventListener("dragging-changed", (e) => {
-        // only allow orbit when orbit mode is active and not dragging
         this.orbit.enabled = !e.value && (this.state.mode === "orbit");
-        if (e.value) this._toast(this.state.mode === "move" ? "Moving…" : "Rotating…");
+        if (e.value) this._toast(this.state.mode === "move" ? "Moving…" : this.state.mode === "scale" ? "Scaling…" : "Rotating…");
       });
     }
   }
