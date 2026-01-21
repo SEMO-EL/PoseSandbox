@@ -79,12 +79,26 @@
           <button class="btn" id="btnClear" type="button" title="Clear selection">Clear</button>
         </div>
 
-        <!-- ✅ Symmetry toggle (body) -->
+        <!-- ✅ Symmetry toggle -->
         <div class="row">
-          <button class="btn" id="btnSymmetry" type="button" title="Mirror body edits: L ↔ R (Rotate + Scale)">
+          <button class="btn" id="btnSymmetry" type="button" title="Mirror body edits: L ↔ R">
             Symmetry: Off
           </button>
         </div>
+
+        <!-- ✅ NEW: 3D Import -->
+        <div class="row row--split">
+          <button class="btn" id="btnImportModel" type="button" title="Import a .glb or .gltf model">
+            Import 3D
+          </button>
+          <button class="btn" id="btnClearModels" type="button" title="Remove imported models">
+            Clear Models
+          </button>
+        </div>
+        <input id="fileModel" type="file"
+               accept=".glb,.gltf,.bin,.png,.jpg,.jpeg,.webp"
+               multiple
+               hidden />
       </section>
 
       <section class="panel__section">
@@ -257,7 +271,7 @@
 
       <section class="panel__section panel__section--footer">
         <div class="tiny">
-          Tip: <kbd>1</kbd>/<kbd>2</kbd>/<kbd>3</kbd>/<kbd>4</kbd> = Rotate/Move/Orbit/Scale • <kbd>Esc</kbd> clears selection • <kbd>F</kbd> focus • <kbd>Del</kbd> deletes prop • <kbd>Ctrl</kbd>/<kbd>Cmd</kbd>+<kbd>M</kbd> symmetry
+          Tip: <kbd>1</kbd>/<kbd>2</kbd>/<kbd>3</kbd>/<kbd>4</kbd> = Rotate/Move/Orbit/Scale • <kbd>Esc</kbd> clears selection • <kbd>F</kbd> focus • <kbd>Del</kbd> deletes prop
         </div>
         <div class="tiny tiny--muted">Built for GitHub Pages. No bundler. No nonsense.</div>
       </section>
@@ -290,9 +304,8 @@
           <li><b>Move:</b> switch to Move to translate the selected joint/prop. (<kbd>2</kbd>)</li>
           <li><b>Orbit:</b> use Orbit mode to move camera freely. (<kbd>3</kbd>)</li>
           <li><b>Scale:</b> scale props normally; for body joints it scales the visible mesh only. (<kbd>4</kbd>)</li>
-          <li><b>Symmetry:</b> mirrors body edits L ↔ R (rotate + scale). (<kbd>Ctrl</kbd>/<kbd>Cmd</kbd>+<kbd>M</kbd>)</li>
-          <li><b>Save JSON:</b> downloads pose.json AND saves a thumbnail in gallery.</li>
-          <li><b>Save to Gallery:</b> saves locally without downloading.</li>
+          <li><b>Symmetry:</b> mirrors body edits L ↔ R (rotate + scale).</li>
+          <li><b>Import 3D:</b> import .glb/.gltf (select the .gltf AND its .bin/textures together if needed).</li>
           <li><b>Export:</b> downloads a PNG of the current view.</li>
         </ul>
         <div class="help__note">
