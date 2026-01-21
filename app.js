@@ -2,6 +2,7 @@
 // PoseSandbox modular entrypoint — uses EVERY module in your tree.
 // ✅ Scale mode (props scale normally; body joints scale only their visible mesh).
 // ✅ Symmetry toggle for BODY (mirrors L ↔ R on rotate + scale).
+// ✅ True reset: restores move + rotate + scale for joints (and joint-mesh scale).
 
 import * as THREE from "three";
 
@@ -11,11 +12,10 @@ import { InputManager, bindPropButtons } from "./controls/inputs.js";
 import { ModesController } from "./controls/modes.js";
 import { SelectionController } from "./controls/selection.js";
 
-import { clamp, makeToast, niceTime } from "./core/helpers.js";
+import { makeToast, niceTime } from "./core/helpers.js";
 import { createState, setShowAxes, setShowGrid, setShowOutline, setPerfEnabled } from "./core/state.js";
 import {
   createWorld,
-  resetAllJointRotations as resetAllJointRotationsWorld,
   addProp as addPropWorld,
   removeProp as removePropWorld,
   PROP_TYPES
@@ -39,12 +39,12 @@ const toastEl = document.getElementById("toast");
 const selectionName = document.getElementById("selectionName");
 const btnFocus = document.getElementById("btnFocus");
 const btnClear = document.getElementById("btnClear");
-const btnSymmetry = document.getElementById("btnSymmetry"); // ✅ NEW
+const btnSymmetry = document.getElementById("btnSymmetry"); // ✅
 
 const modeRotate = document.getElementById("modeRotate");
 const modeMove = document.getElementById("modeMove");
 const modeOrbit = document.getElementById("modeOrbit");
-const modeScale = document.getElementById("modeScale"); // ✅ NEW
+const modeScale = document.getElementById("modeScale"); // ✅
 
 const axisX = document.getElementById("axisX");
 const axisY = document.getElementById("axisY");
@@ -119,7 +119,7 @@ try {
   const STATE = createState();
   const world = createWorld();
 
-  // Symmetry state (kept here to avoid touching other modules)
+  // Symmetry flag (kept local to avoid touching other modules)
   const SYM = { enabled: false };
 
   /* Input */
@@ -166,24 +166,35 @@ try {
   world.root = built.root;
   world.joints = built.joints;
 
-  // ---------------- REST POSE SNAPSHOT (for true reset) ----------------
-const REST = new Map(); // key: joint.name => { pos, quat, scale, meshScale? }
-
-function snapshotRestPose() {
-  REST.clear();
-  (world.joints || []).forEach((j) => {
-    const mesh = findFirstPickableMesh(j); // you already have this helper
-    REST.set(j.name, {
-      pos: j.position.clone(),
-      quat: j.quaternion.clone(),
-      scale: j.scale.clone(),
-      meshScale: mesh ? mesh.scale.clone() : null
+  /* ---------------------------- Scale targeting helper (used by reset snapshot) ---------------------------- */
+  function findFirstPickableMesh(obj) {
+    if (!obj) return null;
+    let found = null;
+    obj.traverse?.((o) => {
+      if (found) return;
+      if (o && o.isMesh && o.userData && o.userData.pickable) found = o;
     });
-  });
-}
+    return found;
+  }
 
-// Call once right after character is built
-snapshotRestPose();
+  /* ---------------- REST POSE SNAPSHOT (true reset: pos+rot+scale + joint-mesh scale) ---------------- */
+  const REST = new Map(); // joint.name -> { pos, quat, scale, meshScale }
+
+  function snapshotRestPose() {
+    REST.clear();
+    (world.joints || []).forEach((j) => {
+      const mesh = findFirstPickableMesh(j);
+      REST.set(j.name, {
+        pos: j.position.clone(),
+        quat: j.quaternion.clone(),
+        scale: j.scale.clone(),
+        meshScale: mesh ? mesh.scale.clone() : null
+      });
+    });
+  }
+
+  // Snapshot once right after the character is built
+  snapshotRestPose();
 
   /* Selection controller (we route events via InputManager) */
   const selection = new SelectionController({
@@ -213,7 +224,7 @@ snapshotRestPose();
     modeRotateBtn: modeRotate,
     modeMoveBtn: modeMove,
     modeOrbitBtn: modeOrbit,
-    modeScaleBtn: modeScale, // ✅
+    modeScaleBtn: modeScale,
     axisXBtn: axisX,
     axisYBtn: axisY,
     axisZBtn: axisZ,
@@ -223,44 +234,7 @@ snapshotRestPose();
     toast: showToast
   });
 
-  // Sync ModesController -> STATE
-  const _setMode = modes.setMode.bind(modes);
-  modes.setMode = (m) => {
-    _setMode(m);
-    STATE.mode = modes.state.mode;
-    attachGizmoForCurrentMode();
-    return STATE.mode;
-  };
-
-  const _toggleAxis = modes.toggleAxis.bind(modes);
-  modes.toggleAxis = (k) => {
-    const v = _toggleAxis(k);
-    STATE.axis = { ...modes.state.axis };
-    return v;
-  };
-
-  const _setSnapDeg = modes.setSnapDeg.bind(modes);
-  modes.setSnapDeg = (deg) => {
-    const v = _setSnapDeg(deg);
-    STATE.snapDeg = modes.state.snapDeg;
-    return v;
-  };
-
-  STATE.mode = modes.state.mode;
-  STATE.axis = { ...modes.state.axis };
-  STATE.snapDeg = modes.state.snapDeg;
-
   /* ---------------------------- Scale targeting ---------------------------- */
-
-  function findFirstPickableMesh(obj) {
-    if (!obj) return null;
-    let found = null;
-    obj.traverse?.((o) => {
-      if (found) return;
-      if (o && o.isMesh && o.userData && o.userData.pickable) found = o;
-    });
-    return found;
-  }
 
   function getGizmoTargetForSelection(sel) {
     if (!sel) return null;
@@ -291,6 +265,33 @@ snapshotRestPose();
     gizmo.attach(target);
     selection.updateOutline();
   }
+
+  // Sync ModesController -> STATE
+  const _setMode = modes.setMode.bind(modes);
+  modes.setMode = (m) => {
+    _setMode(m);
+    STATE.mode = modes.state.mode;
+    attachGizmoForCurrentMode();
+    return STATE.mode;
+  };
+
+  const _toggleAxis = modes.toggleAxis.bind(modes);
+  modes.toggleAxis = (k) => {
+    const v = _toggleAxis(k);
+    STATE.axis = { ...modes.state.axis };
+    return v;
+  };
+
+  const _setSnapDeg = modes.setSnapDeg.bind(modes);
+  modes.setSnapDeg = (deg) => {
+    const v = _setSnapDeg(deg);
+    STATE.snapDeg = modes.state.snapDeg;
+    return v;
+  };
+
+  STATE.mode = modes.state.mode;
+  STATE.axis = { ...modes.state.axis };
+  STATE.snapDeg = modes.state.snapDeg;
 
   // Wrap selection.setSelection so gizmo follows our targeting rules
   const _selSet = selection.setSelection.bind(selection);
@@ -326,21 +327,14 @@ snapshotRestPose();
   const _Q = new THREE.Quaternion();
 
   function mirrorQuaternionAcrossX(srcQuat, outQuat) {
-    // Build rotation matrix
     _R.makeRotationFromQuaternion(srcQuat);
-
-    // M * R * M
     _TMP.copy(_M).multiply(_R).multiply(_M);
-
-    // Extract quaternion
     outQuat.setFromRotationMatrix(_TMP);
     outQuat.normalize();
     return outQuat;
   }
 
-  function mirrorScaleToCounterpartIfPossible(selectedObj) {
-    // Only meaningful for joint scaling (mesh under joint)
-    // selectedObj here is the gizmo target in scale mode (mesh OR joint/prop)
+  function mirrorScaleToCounterpartIfPossible() {
     const sel = selection.getSelected();
     if (!sel || !sel.userData?.isJoint) return;
 
@@ -353,7 +347,6 @@ snapshotRestPose();
     const otherMesh = findFirstPickableMesh(otherJoint);
     const thisTarget = getGizmoTargetForSelection(sel);
 
-    // We expect thisTarget to be a mesh in scale mode for joints
     if (thisTarget && thisTarget.isMesh && otherMesh && otherMesh.isMesh) {
       otherMesh.scale.copy(thisTarget.scale);
     }
@@ -387,11 +380,10 @@ snapshotRestPose();
 
   updateSymmetryButtonUI();
 
-  // Listen to gizmo edits; mirror when enabled
+  // Mirror when user edits with gizmo
   gizmo.addEventListener("objectChange", () => {
     if (!SYM.enabled) return;
 
-    // Only mirror BODY, not props
     const sel = selection.getSelected();
     if (!sel || !sel.userData?.isJoint) return;
 
@@ -399,8 +391,7 @@ snapshotRestPose();
       mirrorRotationToCounterpartIfPossible();
       selection.updateOutline();
     } else if (STATE.mode === "scale") {
-      // Scaling joint -> target is mesh; apply same scale to counterpart mesh
-      mirrorScaleToCounterpartIfPossible(gizmo.object);
+      mirrorScaleToCounterpartIfPossible();
       selection.updateOutline();
     }
   });
@@ -474,32 +465,27 @@ snapshotRestPose();
     return serializePose({ world, poseNotesEl: poseNotes });
   }
 
- function resetAllJointTransforms() {
-  // Restore joints to exact built/rest pose (position + rotation + scale)
-  (world.joints || []).forEach((j) => {
-    const r = REST.get(j.name);
-    if (!r) return;
+  function resetAllJointTransforms() {
+    (world.joints || []).forEach((j) => {
+      const r = REST.get(j.name);
+      if (!r) return;
 
-    j.position.copy(r.pos);
-    j.quaternion.copy(r.quat);
-    j.scale.copy(r.scale);
+      j.position.copy(r.pos);
+      j.quaternion.copy(r.quat);
+      j.scale.copy(r.scale);
 
-    // Also restore the visible mesh scale for Scale-mode body edits
-    const mesh = findFirstPickableMesh(j);
-    if (mesh && r.meshScale) mesh.scale.copy(r.meshScale);
-  });
-}
+      // Also restore visible mesh scale for Scale-mode body edits
+      const mesh = findFirstPickableMesh(j);
+      if (mesh && r.meshScale) mesh.scale.copy(r.meshScale);
+    });
+  }
 
-function resetPose() {
-  resetAllJointTransforms();
-
-  // optional: also clear selection/gizmo so you see it cleanly
-  selection.updateOutline();
-  attachGizmoForCurrentMode();
-
-  showToast("Pose reset (move + rotate + scale)");
-}
-
+  function resetPose() {
+    resetAllJointTransforms();
+    selection.updateOutline();
+    attachGizmoForCurrentMode();
+    showToast("Pose reset (move + rotate + scale)");
+  }
 
   function forceRenderOnce() {
     renderer.render(scene, camera);
@@ -520,7 +506,7 @@ function resetPose() {
   function applyPoseJointsOnlyToScene(data) {
     return applyPoseJointsOnly(data, {
       world,
-      resetAllJointRotations,
+      resetAllJointRotations: resetPose, // preset applies joints-only; resetPose is safe baseline
       showToast,
       updateOutline: () => selection.updateOutline(),
       forceRenderOnce
