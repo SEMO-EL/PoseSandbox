@@ -1,27 +1,7 @@
 // core/state.js
 // Central mutable state for the PoseSandbox app (UI + runtime toggles).
-// Keep it simple: a plain object + small helpers, no Three.js imports.
-
-/**
- * @typedef {Object} AxisState
- * @property {boolean} x
- * @property {boolean} y
- * @property {boolean} z
- */
-
-/**
- * @typedef {Object} AppState
- * @property {"rotate"|"move"|"orbit"|"scale"} mode
- * @property {AxisState} axis
- * @property {number} snapDeg
- * @property {boolean} showGrid
- * @property {boolean} showAxes
- * @property {boolean} showOutline
- * @property {boolean} perfEnabled
- */
 
 export function createState() {
-  /** @type {AppState} */
   const STATE = {
     mode: "rotate",
     axis: { x: true, y: true, z: true },
