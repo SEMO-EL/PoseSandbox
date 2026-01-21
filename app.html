@@ -79,10 +79,10 @@
           <button class="btn" id="btnClear" type="button" title="Clear selection">Clear</button>
         </div>
 
-        <!-- ✅ NEW BUTTON (Selection section) -->
+        <!-- ✅ NEW: Symmetry toggle -->
         <div class="row">
-          <button class="btn" id="btnDuplicateSelected" type="button" title="Duplicate selected prop (props only)">
-            Duplicate
+          <button class="btn" id="btnSymmetry" type="button" title="Mirror body edits: L ↔ R">
+            Symmetry: Off
           </button>
         </div>
       </section>
@@ -97,7 +97,6 @@
 
         <div class="row row--split">
           <button class="btn" id="modeOrbit" type="button" title="Shortcut: 3">Orbit</button>
-          <!-- ✅ Scale mode button -->
           <button class="btn" id="modeScale" type="button" title="Shortcut: 4">Scale</button>
         </div>
 
@@ -291,6 +290,7 @@
           <li><b>Move:</b> switch to Move to translate the selected joint/prop. (<kbd>2</kbd>)</li>
           <li><b>Orbit:</b> use Orbit mode to move camera freely. (<kbd>3</kbd>)</li>
           <li><b>Scale:</b> scale props normally; for body joints it scales the visible mesh only. (<kbd>4</kbd>)</li>
+          <li><b>Symmetry:</b> mirrors body edits L ↔ R (rotate + scale).</li>
           <li><b>Save JSON:</b> downloads pose.json AND saves a thumbnail in gallery.</li>
           <li><b>Save to Gallery:</b> saves locally without downloading.</li>
           <li><b>Export:</b> downloads a PNG of the current view.</li>
