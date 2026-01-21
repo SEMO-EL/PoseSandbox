@@ -9,7 +9,6 @@
   <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg">
   <link rel="shortcut icon" type="image/png" sizes="48x48" href="./favicon.png">
 
-
   <title>PoseSandbox — Fast 3D Posing in Your Browser</title>
 
   <!-- SEO / social -->
@@ -96,7 +95,7 @@
             </div>
             <div class="metaCard">
               <div class="metaCard__k">Controls</div>
-              <div class="metaCard__v">1/2/3 Modes</div>
+              <div class="metaCard__v">1/2/3/4 Modes</div>
             </div>
           </div>
         </div>
@@ -114,6 +113,7 @@
                 <span class="kbd">1</span><span class="kbd">Rotate</span>
                 <span class="kbd">2</span><span class="kbd">Move</span>
                 <span class="kbd">3</span><span class="kbd">Orbit</span>
+                <span class="kbd">4</span><span class="kbd">Scale</span>
               </div>
             </div>
 
@@ -169,8 +169,8 @@
         <div class="grid3">
           <article class="card reveal">
             <div class="icon">⚙</div>
-            <h3>3 Modes</h3>
-            <p>Rotate / Move / Orbit with buttons or shortcuts <b>1</b>, <b>2</b>, <b>3</b>.</p>
+            <h3>4 Modes</h3>
+            <p>Rotate / Move / Orbit / Scale with buttons or shortcuts <b>1</b>, <b>2</b>, <b>3</b>, <b>4</b>.</p>
           </article>
 
           <article class="card reveal">
@@ -212,57 +212,67 @@
         <div class="section__head reveal">
           <h2>Packs</h2>
           <p>
-            Optional add-ons that expand your library with more poses, props, and ready-to-use scenes.
+            Optional add-ons that expand your library with more poses (and more goodies later).
           </p>
         </div>
 
         <div class="pricing">
+          <!-- Starter Pack (REAL) -->
           <article class="priceCard reveal">
             <div class="priceCard__top">
               <div class="priceCard__name">Starter Pack</div>
               <div class="priceCard__price">$5</div>
-              <div class="priceCard__desc">Extra props + preset poses</div>
+              <div class="priceCard__desc">20 preset poses (no props)</div>
             </div>
             <ul class="list">
               <li>20 preset poses</li>
-              <li>15 extra props</li>
-              <li>Pose gallery templates</li>
+              <li>Everyday + useful basics</li>
+              <li>Instant download</li>
             </ul>
-            <a class="btn btn--ghost btn--full" href="#cta">Get Starter</a>
-          </article>
 
-          <article class="priceCard priceCard--hot reveal">
-            <div class="hot">Most popular</div>
-            <div class="priceCard__top">
-              <div class="priceCard__name">Creator Pack</div>
-              <div class="priceCard__price">$15</div>
-              <div class="priceCard__desc">Best value for creators</div>
-            </div>
-            <ul class="list">
-              <li>60 preset poses</li>
-              <li>50 extra props</li>
-              <li>Scene presets</li>
-              <li>Early access updates</li>
-            </ul>
-            <a class="btn btn--primary btn--full" href="#cta">
-              Get Creator
+            <!-- Gumroad overlay button -->
+            <a class="btn btn--primary btn--full gumroad-button"
+               href="https://posesandbox.gumroad.com/l/Starter-Pack"
+               data-gumroad-overlay="true"
+               data-gumroad-single-product="true">
+              Buy Starter Pack
               <span class="btn__shine" aria-hidden="true"></span>
             </a>
           </article>
 
+          <!-- Creator Pack (COMING SOON) -->
+          <article class="priceCard priceCard--hot reveal">
+            <div class="hot">Coming soon</div>
+            <div class="priceCard__top">
+              <div class="priceCard__name">Creator Pack</div>
+              <div class="priceCard__price">—</div>
+              <div class="priceCard__desc">A bigger library + creator-focused extras</div>
+            </div>
+            <ul class="list">
+              <li>Expanded pose categories</li>
+              <li>More variety, more polish</li>
+              <li>Bonus tools & surprises</li>
+            </ul>
+            <a class="btn btn--ghost btn--full" href="#cta" aria-disabled="true" tabindex="0">
+              Coming Soon
+            </a>
+          </article>
+
+          <!-- Studio Pack (COMING SOON) -->
           <article class="priceCard reveal">
             <div class="priceCard__top">
               <div class="priceCard__name">Studio Pack</div>
-              <div class="priceCard__price">$29</div>
-              <div class="priceCard__desc">For serious workflows</div>
+              <div class="priceCard__price">—</div>
+              <div class="priceCard__desc">The full workflow pack (details soon)</div>
             </div>
             <ul class="list">
-              <li>120 preset poses</li>
-              <li>100 extra props</li>
-              <li>Advanced scene kits</li>
-              <li>Priority feature requests</li>
+              <li>Premium pose sets</li>
+              <li>Advanced workflow goodies</li>
+              <li>Early access drops</li>
             </ul>
-            <a class="btn btn--ghost btn--full" href="#cta">Get Studio</a>
+            <a class="btn btn--ghost btn--full" href="#cta" aria-disabled="true" tabindex="0">
+              Coming Soon
+            </a>
           </article>
         </div>
 
@@ -270,7 +280,7 @@
           <div class="noteCard__left">
             <h3>Want more content?</h3>
             <p>
-              Packs add more poses and props so you can work faster and build a bigger library over time.
+              The Starter Pack is live now. Bigger packs are coming soon — more variety, more polish, and extras built for faster posing.
             </p>
           </div>
           <div class="noteCard__right">
@@ -301,9 +311,16 @@
           </details>
 
           <details class="faqItem reveal">
-            <summary>What’s included in packs?</summary>
+            <summary>What’s included in the Starter Pack?</summary>
             <div class="faqItem__body">
-              Packs can include extra preset poses, more props, and scene presets — designed to speed up your workflow.
+              The Starter Pack includes <b>20 preset poses</b>. No props, no scenes — just clean pose presets you can use right away.
+            </div>
+          </details>
+
+          <details class="faqItem reveal">
+            <summary>What’s included in the other packs?</summary>
+            <div class="faqItem__body">
+              They’re in the works. Expect bigger pose libraries and extra workflow goodies — details will be revealed soon.
             </div>
           </details>
 
@@ -347,6 +364,9 @@
       </div>
     </div>
   </footer>
+
+  <!-- Gumroad overlay script (required for overlay checkout) -->
+  <script src="https://gumroad.com/js/gumroad.js"></script>
 
   <!-- Smooth transitions + particles + menu -->
   <script>
