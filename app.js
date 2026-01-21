@@ -1,7 +1,7 @@
 // app.js
 // PoseSandbox modular entrypoint — uses EVERY module in your tree.
-// Adds: ✅ Scale mode (props scale normally; body joints scale only their visible mesh).
-// Adds: ✅ Duplicate button in Selection (duplicates selected prop).
+// ✅ Scale mode (props scale normally; body joints scale only their visible mesh).
+// ✅ Symmetry toggle for BODY (mirrors L ↔ R on rotate + scale).
 
 import * as THREE from "three";
 
@@ -39,7 +39,7 @@ const toastEl = document.getElementById("toast");
 const selectionName = document.getElementById("selectionName");
 const btnFocus = document.getElementById("btnFocus");
 const btnClear = document.getElementById("btnClear");
-const btnDuplicateSelected = document.getElementById("btnDuplicateSelected"); // ✅ NEW
+const btnSymmetry = document.getElementById("btnSymmetry"); // ✅ NEW
 
 const modeRotate = document.getElementById("modeRotate");
 const modeMove = document.getElementById("modeMove");
@@ -119,6 +119,9 @@ try {
   const STATE = createState();
   const world = createWorld();
 
+  // Symmetry state (kept here to avoid touching other modules)
+  const SYM = { enabled: false };
+
   /* Input */
   const input = new InputManager({ canvas, helpModal });
 
@@ -181,9 +184,7 @@ try {
   });
 
   // SelectionController adds its own outline; remove engine outline to avoid duplicates.
-  try {
-    if (engineOutline) scene.remove(engineOutline);
-  } catch {}
+  try { if (engineOutline) scene.remove(engineOutline); } catch {}
 
   // We do NOT want SelectionController to bind window events (InputManager does), so kill its listeners.
   selection.destroy();
@@ -193,7 +194,7 @@ try {
     modeRotateBtn: modeRotate,
     modeMoveBtn: modeMove,
     modeOrbitBtn: modeOrbit,
-    modeScaleBtn: modeScale, // ✅ NEW
+    modeScaleBtn: modeScale, // ✅
     axisXBtn: axisX,
     axisYBtn: axisY,
     axisZBtn: axisZ,
@@ -203,7 +204,7 @@ try {
     toast: showToast
   });
 
-  // Sync ModesController -> STATE (single source of truth for other modules)
+  // Sync ModesController -> STATE
   const _setMode = modes.setMode.bind(modes);
   modes.setMode = (m) => {
     _setMode(m);
@@ -245,22 +246,16 @@ try {
   function getGizmoTargetForSelection(sel) {
     if (!sel) return null;
 
-    // Orbit mode: no gizmo
     if (STATE.mode === "orbit") return null;
 
-    // Scale mode: special rule
     if (STATE.mode === "scale") {
-      // Props: scale the whole group (keeps rotations/position coherent)
       if (sel.userData?.isProp) return sel;
-
-      // Joints: scale ONLY the visible mesh under that joint (rig stays stable)
       if (sel.userData?.isJoint) {
         const mesh = findFirstPickableMesh(sel);
         return mesh || sel;
       }
     }
 
-    // Rotate/Move: attach to the selected group itself (same as before)
     return sel;
   }
 
@@ -278,7 +273,7 @@ try {
     selection.updateOutline();
   }
 
-  // Wrap selection.setSelection so gizmo attachment always follows our targeting rules
+  // Wrap selection.setSelection so gizmo follows our targeting rules
   const _selSet = selection.setSelection.bind(selection);
   selection.setSelection = (obj) => {
     _selSet(obj);
@@ -290,6 +285,106 @@ try {
     _selClear();
     gizmo.detach();
   };
+
+  /* ---------------------------- BODY SYMMETRY ---------------------------- */
+
+  function counterpartName(name) {
+    const n = String(name || "");
+    if (n.startsWith("l_")) return "r_" + n.slice(2);
+    if (n.startsWith("r_")) return "l_" + n.slice(2);
+    return null;
+  }
+
+  function getJointByName(name) {
+    if (!name) return null;
+    return (world.joints || []).find((j) => j && j.name === name) || null;
+  }
+
+  // Mirror rotation across X axis: R' = M R M with M = diag(-1, 1, 1)
+  const _M = new THREE.Matrix4().makeScale(-1, 1, 1);
+  const _R = new THREE.Matrix4();
+  const _TMP = new THREE.Matrix4();
+  const _Q = new THREE.Quaternion();
+
+  function mirrorQuaternionAcrossX(srcQuat, outQuat) {
+    // Build rotation matrix
+    _R.makeRotationFromQuaternion(srcQuat);
+
+    // M * R * M
+    _TMP.copy(_M).multiply(_R).multiply(_M);
+
+    // Extract quaternion
+    outQuat.setFromRotationMatrix(_TMP);
+    outQuat.normalize();
+    return outQuat;
+  }
+
+  function mirrorScaleToCounterpartIfPossible(selectedObj) {
+    // Only meaningful for joint scaling (mesh under joint)
+    // selectedObj here is the gizmo target in scale mode (mesh OR joint/prop)
+    const sel = selection.getSelected();
+    if (!sel || !sel.userData?.isJoint) return;
+
+    const cn = counterpartName(sel.name);
+    if (!cn) return;
+
+    const otherJoint = getJointByName(cn);
+    if (!otherJoint) return;
+
+    const otherMesh = findFirstPickableMesh(otherJoint);
+    const thisTarget = getGizmoTargetForSelection(sel);
+
+    // We expect thisTarget to be a mesh in scale mode for joints
+    if (thisTarget && thisTarget.isMesh && otherMesh && otherMesh.isMesh) {
+      otherMesh.scale.copy(thisTarget.scale);
+    }
+  }
+
+  function mirrorRotationToCounterpartIfPossible() {
+    const sel = selection.getSelected();
+    if (!sel || !sel.userData?.isJoint) return;
+
+    const cn = counterpartName(sel.name);
+    if (!cn) return;
+
+    const other = getJointByName(cn);
+    if (!other) return;
+
+    mirrorQuaternionAcrossX(sel.quaternion, _Q);
+    other.quaternion.copy(_Q);
+  }
+
+  function updateSymmetryButtonUI() {
+    if (!btnSymmetry) return;
+    btnSymmetry.textContent = SYM.enabled ? "Symmetry: On" : "Symmetry: Off";
+    btnSymmetry.classList.toggle("btn--active", !!SYM.enabled);
+  }
+
+  btnSymmetry?.addEventListener("click", () => {
+    SYM.enabled = !SYM.enabled;
+    updateSymmetryButtonUI();
+    showToast(SYM.enabled ? "Symmetry ON (body)" : "Symmetry OFF");
+  });
+
+  updateSymmetryButtonUI();
+
+  // Listen to gizmo edits; mirror when enabled
+  gizmo.addEventListener("objectChange", () => {
+    if (!SYM.enabled) return;
+
+    // Only mirror BODY, not props
+    const sel = selection.getSelected();
+    if (!sel || !sel.userData?.isJoint) return;
+
+    if (STATE.mode === "rotate") {
+      mirrorRotationToCounterpartIfPossible();
+      selection.updateOutline();
+    } else if (STATE.mode === "scale") {
+      // Scaling joint -> target is mesh; apply same scale to counterpart mesh
+      mirrorScaleToCounterpartIfPossible(gizmo.object);
+      selection.updateOutline();
+    }
+  });
 
   /* ---------------------------- Props ---------------------------- */
 
@@ -346,54 +441,6 @@ try {
     removePropWorld(world, scene, sel);
     selection.clearSelection();
     showToast("Prop deleted");
-  }
-
-  function duplicateSelectedProp() {
-    const sel = selection.getSelected();
-    if (!sel || !sel.userData?.isProp) {
-      showToast("Select a prop to duplicate");
-      return null;
-    }
-
-    // Deep clone
-    const clone = sel.clone(true);
-
-    // Ensure userdata is not shared
-    clone.userData = { ...(sel.userData || {}) };
-    clone.userData.isProp = true;
-
-    // Unique name
-    const t = String(clone.userData.type || "prop");
-    clone.name = `prop_${t}_${world.props.length + 1}`;
-
-    // Copy transforms with a small offset so it's visible
-    clone.position.copy(sel.position).add(new THREE.Vector3(0.25, 0, 0.25));
-    clone.quaternion.copy(sel.quaternion);
-    clone.scale.copy(sel.scale);
-
-    // Make sure meshes remain pickable + have independent materials
-    clone.traverse((o) => {
-      if (o && o.isMesh) {
-        o.castShadow = true;
-        o.receiveShadow = true;
-
-        if (!o.userData) o.userData = {};
-        o.userData.pickable = true;
-
-        if (o.material) {
-          // Avoid changing both props when editing material later
-          o.material = o.material.clone();
-        }
-      }
-    });
-
-    // Register into world + scene
-    world.props.push(clone);
-    scene.add(clone);
-
-    selection.setSelection(clone);
-    showToast("Prop duplicated");
-    return clone;
   }
 
   bindPropButtons({
@@ -480,11 +527,7 @@ try {
     ctx.imageSmoothingQuality = "high";
     ctx.drawImage(src, sx, sy, s, s, 0, 0, size, size);
 
-    try {
-      return thumb.toDataURL("image/png");
-    } catch {
-      return null;
-    }
+    try { return thumb.toDataURL("image/png"); } catch { return null; }
   }
 
   const gallery = new Gallery({
@@ -527,22 +570,10 @@ try {
     showToast("Help closed");
   }
 
-  btnHelp?.addEventListener("click", (e) => {
-    e.preventDefault();
-    openHelp();
-  });
-  btnCloseHelp?.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    closeHelp();
-  });
-  btnHelpOk?.addEventListener("click", (e) => {
-    e.preventDefault();
-    closeHelp();
-  });
-  helpModal?.addEventListener("click", (e) => {
-    if (e.target?.dataset?.close === "true") closeHelp();
-  });
+  btnHelp?.addEventListener("click", (e) => { e.preventDefault(); openHelp(); });
+  btnCloseHelp?.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); closeHelp(); });
+  btnHelpOk?.addEventListener("click", (e) => { e.preventDefault(); closeHelp(); });
+  helpModal?.addEventListener("click", (e) => { if (e.target?.dataset?.close === "true") closeHelp(); });
 
   /* ---------------------------- UI wiring ---------------------------- */
 
@@ -611,9 +642,6 @@ try {
   btnDeletePose?.addEventListener("click", () => gallery.deleteSelected());
   btnClearGallery?.addEventListener("click", () => gallery.clearAll());
 
-  // ✅ NEW: duplicate button (props only)
-  btnDuplicateSelected?.addEventListener("click", () => duplicateSelectedProp());
-
   /* ---------------------------- Input routing ---------------------------- */
 
   input.on("pointerdown", (evt) => {
@@ -657,10 +685,12 @@ try {
       return;
     }
 
-    // ✅ Ctrl/Cmd + D => duplicate selected prop
-    if ((e.ctrlKey || e.metaKey) && k === "d") {
+    // Ctrl/Cmd + M => toggle symmetry quickly
+    if ((e.ctrlKey || e.metaKey) && k === "m") {
       e.preventDefault();
-      duplicateSelectedProp();
+      SYM.enabled = !SYM.enabled;
+      updateSymmetryButtonUI();
+      showToast(SYM.enabled ? "Symmetry ON (body)" : "Symmetry OFF");
       return;
     }
 
