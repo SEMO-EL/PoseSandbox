@@ -909,18 +909,10 @@ try {
 
   /* ---------------------------- Input routing ---------------------------- */
 
- input.on("pointerdown", (evt) => {
-  selection.onPointerDown(evt.originalEvent);
-
-  // ✅ If you clicked an imported mesh, promote selection to its root
-  const sel = selection.getSelected?.();
-  if (sel?.userData?.isImportedModel && sel.userData.importRoot) {
-    selection.setSelection(sel.userData.importRoot);
-  }
-
-  attachGizmoForCurrentMode();
-});
-
+  input.on("pointerdown", (evt) => {
+    selection.onPointerDown(evt.originalEvent);
+    attachGizmoForCurrentMode();
+  });
 
   input.on("keydown", (evt) => {
     const e = evt.originalEvent;
