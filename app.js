@@ -83,6 +83,13 @@ const btnCloseHelp = document.getElementById("btnCloseHelp");
 const btnHelpOk = document.getElementById("btnHelpOk");
 const btnPerf = document.getElementById("btnPerf");
 
+const btnRefFitCenter = document.getElementById("btnRefFitCenter");
+const btnRefFitLeft = document.getElementById("btnRefFitLeft");
+const btnRefFitRight = document.getElementById("btnRefFitRight");
+const btnRefHalf = document.getElementById("btnRefHalf");
+const btnRefFull = document.getElementById("btnRefFull");
+
+
 /* Import 3D */
 const btnImport3D = document.getElementById("btnImport3D");
 const fileModel = document.getElementById("fileModel");
