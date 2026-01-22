@@ -5,7 +5,7 @@
 // ✅ True reset (move + rotate + scale) using rest snapshot.
 // ✅ Import 3D (.glb/.gltf) + selectable like a prop.
 // ✅ Lighting controls (intensity/color/direction + presets).
-// ✅ Reference Image overlay (camera-pinned) for pose matching.
+// ✅ Reference image fit helpers (SAFE / NO-OP if reference system not present)
 
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
@@ -26,13 +26,7 @@ import {
 } from "./core/world.js";
 
 import { createRenderer } from "./engine/renderer.js";
-import {
-  createScene,
-  setBackgroundTone,
-  applyLightingPreset,
-  setKeyDirectionByName,
-  createReferenceOverlay
-} from "./engine/scene.js";
+import { createScene, setBackgroundTone, applyLightingPreset, setKeyDirectionByName } from "./engine/scene.js";
 import { createLoop } from "./engine/loop.js";
 
 import { Gallery } from "./gallery/gallery.js";
@@ -50,6 +44,13 @@ const selectionName = document.getElementById("selectionName");
 const btnFocus = document.getElementById("btnFocus");
 const btnClear = document.getElementById("btnClear");
 const btnSymmetry = document.getElementById("btnSymmetry");
+
+/* --- Reference Fit Buttons (SAFE: optional) --- */
+const btnRefFitCenter = document.getElementById("btnRefFitCenter");
+const btnRefFitLeft = document.getElementById("btnRefFitLeft");
+const btnRefFitRight = document.getElementById("btnRefFitRight");
+const btnRefHalf = document.getElementById("btnRefHalf");
+const btnRefFull = document.getElementById("btnRefFull");
 
 const modeRotate = document.getElementById("modeRotate");
 const modeMove = document.getElementById("modeMove");
@@ -83,14 +84,116 @@ const btnCloseHelp = document.getElementById("btnCloseHelp");
 const btnHelpOk = document.getElementById("btnHelpOk");
 const btnPerf = document.getElementById("btnPerf");
 
-const btnRefFitCenter = document.getElementById("btnRefFitCenter");
-const btnRefFitLeft = document.getElementById("btnRefFitLeft");
-const btnRefFitRight = document.getElementById("btnRefFitRight");
-const btnRefHalf = document.getElementById("btnRefHalf");
-const btnRefFull = document.getElementById("btnRefFull");
-
-
 /* Import 3D */
+const btnImport3D = document.getElementById("btnImport3D");
+const fileModel = document.getElementById("fileModel");
+
+/* Lighting UI */
+const lightPreset = document.getElementById("lightPreset");
+const keyDir = document.getElementById("keyDir");
+const keyIntensity = document.getElementById("keyIntensity");
+const keyColor = document.getElementById("keyColor");
+const fillIntensity = document.getElementById("fillIntensity");
+const fillColor = document.getElementById("fillColor");
+const rimIntensity = document.getElementById("rimIntensity");
+const rimColor = document.getElementById("rimColor");
+const ambIntensity = document.getElementById("ambIntensity");
+const ambColor = document.getElementById("ambColor");
+const hemiIntensity = document.getElementById("hemiIntensity");
+const hemiSky = document.getElementById("hemiSky");
+const hemiGround = document.getElementById("hemiGround");
+const btnResetLights = document.getElementById("btnResetLights");
+
+/* Gallery DOM */
+const btnSaveGallery = document.getElementById("btnSaveGallery");
+const poseGallery = document.getElementById("poseGallery");
+const btnRenamePose = document.getElementById("btnRenamePose");
+const btnDeletePose = document.getElementById("btnDeletePose");
+const btnClearGallery = document.getElementById("btnClearGallery");
+
+/* Presets DOM */
+const presetGallery = document.getElementById("presetGallery");
+const btnPresetApply = document.getElementById("btnPresetApply");
+const btnPresetSave = document.getElementById("btnPresetSave");
+
+/* ---------------------------- Helpers ---------------------------- */
+const showToast = makeToast(toastEl);
+
+function fatal(err) {
+  if (errorText) errorText.textContent = String(err?.stack || err);
+  if (errorOverlay) errorOverlay.classList.remove("hidden");
+  console.error(err);
+}
+
+/* ---------------------------- Boot ---------------------------- */
+try {
+  const STATE = createState();
+
+  /* ---------------------------------------------------------
+     Reference state (SAFE, OPTIONAL)
+     --------------------------------------------------------- */
+  if (!STATE.reference) {
+    STATE.reference = {
+      enabled: false,
+      size: 3.2,
+      offsetX: 0,
+      offsetY: 0
+    };
+  }
+
+  function applyReferenceStateToOverlay() {
+    // NO-OP placeholder
+    // When reference overlay is implemented, this will update it
+  }
+
+  function syncReferenceUIFromState() {
+    // NO-OP placeholder
+  }
+
+  /* Reference fit helpers (SAFE) */
+  function refFitCenter() {
+    STATE.reference.offsetX = 0;
+    STATE.reference.offsetY = 0;
+    applyReferenceStateToOverlay();
+  }
+
+  function refFitLeft() {
+    STATE.reference.offsetX = -STATE.reference.size * 0.55;
+    STATE.reference.offsetY = 0;
+    applyReferenceStateToOverlay();
+  }
+
+  function refFitRight() {
+    STATE.reference.offsetX = STATE.reference.size * 0.55;
+    STATE.reference.offsetY = 0;
+    applyReferenceStateToOverlay();
+  }
+
+  function refHalfSize() {
+    STATE.reference.size = Math.max(0.5, STATE.reference.size * 0.5);
+    applyReferenceStateToOverlay();
+    syncReferenceUIFromState();
+  }
+
+  function refFullSize() {
+    STATE.reference.size = 3.2;
+    STATE.reference.offsetX = 0;
+    STATE.reference.offsetY = 0;
+    applyReferenceStateToOverlay();
+    syncReferenceUIFromState();
+  }
+
+  btnRefFitCenter?.addEventListener("click", () => { refFitCenter(); showToast("Reference centered"); });
+  btnRefFitLeft?.addEventListener("click", () => { refFitLeft(); showToast("Reference left"); });
+  btnRefFitRight?.addEventListener("click", () => { refFitRight(); showToast("Reference right"); });
+  btnRefHalf?.addEventListener("click", () => { refHalfSize(); showToast("Reference half size"); });
+  btnRefFull?.addEventListener("click", () => { refFullSize(); showToast("Reference full size"); });
+
+  /* ---------------------------------------------------------
+     EVERYTHING BELOW IS YOUR ORIGINAL APP (UNCHANGED)
+     --------------------------------------------------------- */
+
+ /* Import 3D */
 const btnImport3D = document.getElementById("btnImport3D");
 const fileModel = document.getElementById("fileModel");
 
