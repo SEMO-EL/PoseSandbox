@@ -5,7 +5,7 @@
 // ✅ True reset (move + rotate + scale) using rest snapshot.
 // ✅ Import 3D (.glb/.gltf) + selectable like a prop.
 // ✅ Lighting controls (intensity/color/direction + presets).
-// ✅ Reference image fit helpers (SAFE / NO-OP if reference system not present)
+// ✅ Reference Image overlay pinned to camera (load/clear/show/opacity/size/offset/flip + fit buttons).
 
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
@@ -44,13 +44,6 @@ const selectionName = document.getElementById("selectionName");
 const btnFocus = document.getElementById("btnFocus");
 const btnClear = document.getElementById("btnClear");
 const btnSymmetry = document.getElementById("btnSymmetry");
-
-/* --- Reference Fit Buttons (SAFE: optional) --- */
-const btnRefFitCenter = document.getElementById("btnRefFitCenter");
-const btnRefFitLeft = document.getElementById("btnRefFitLeft");
-const btnRefFitRight = document.getElementById("btnRefFitRight");
-const btnRefHalf = document.getElementById("btnRefHalf");
-const btnRefFull = document.getElementById("btnRefFull");
 
 const modeRotate = document.getElementById("modeRotate");
 const modeMove = document.getElementById("modeMove");
@@ -116,116 +109,7 @@ const presetGallery = document.getElementById("presetGallery");
 const btnPresetApply = document.getElementById("btnPresetApply");
 const btnPresetSave = document.getElementById("btnPresetSave");
 
-/* ---------------------------- Helpers ---------------------------- */
-const showToast = makeToast(toastEl);
-
-function fatal(err) {
-  if (errorText) errorText.textContent = String(err?.stack || err);
-  if (errorOverlay) errorOverlay.classList.remove("hidden");
-  console.error(err);
-}
-
-/* ---------------------------- Boot ---------------------------- */
-try {
-  const STATE = createState();
-
-  /* ---------------------------------------------------------
-     Reference state (SAFE, OPTIONAL)
-     --------------------------------------------------------- */
-  if (!STATE.reference) {
-    STATE.reference = {
-      enabled: false,
-      size: 3.2,
-      offsetX: 0,
-      offsetY: 0
-    };
-  }
-
-  function applyReferenceStateToOverlay() {
-    // NO-OP placeholder
-    // When reference overlay is implemented, this will update it
-  }
-
-  function syncReferenceUIFromState() {
-    // NO-OP placeholder
-  }
-
-  /* Reference fit helpers (SAFE) */
-  function refFitCenter() {
-    STATE.reference.offsetX = 0;
-    STATE.reference.offsetY = 0;
-    applyReferenceStateToOverlay();
-  }
-
-  function refFitLeft() {
-    STATE.reference.offsetX = -STATE.reference.size * 0.55;
-    STATE.reference.offsetY = 0;
-    applyReferenceStateToOverlay();
-  }
-
-  function refFitRight() {
-    STATE.reference.offsetX = STATE.reference.size * 0.55;
-    STATE.reference.offsetY = 0;
-    applyReferenceStateToOverlay();
-  }
-
-  function refHalfSize() {
-    STATE.reference.size = Math.max(0.5, STATE.reference.size * 0.5);
-    applyReferenceStateToOverlay();
-    syncReferenceUIFromState();
-  }
-
-  function refFullSize() {
-    STATE.reference.size = 3.2;
-    STATE.reference.offsetX = 0;
-    STATE.reference.offsetY = 0;
-    applyReferenceStateToOverlay();
-    syncReferenceUIFromState();
-  }
-
-  btnRefFitCenter?.addEventListener("click", () => { refFitCenter(); showToast("Reference centered"); });
-  btnRefFitLeft?.addEventListener("click", () => { refFitLeft(); showToast("Reference left"); });
-  btnRefFitRight?.addEventListener("click", () => { refFitRight(); showToast("Reference right"); });
-  btnRefHalf?.addEventListener("click", () => { refHalfSize(); showToast("Reference half size"); });
-  btnRefFull?.addEventListener("click", () => { refFullSize(); showToast("Reference full size"); });
-
-  /* ---------------------------------------------------------
-     EVERYTHING BELOW IS YOUR ORIGINAL APP (UNCHANGED)
-     --------------------------------------------------------- */
-
- /* Import 3D */
-const btnImport3D = document.getElementById("btnImport3D");
-const fileModel = document.getElementById("fileModel");
-
-/* Lighting UI */
-const lightPreset = document.getElementById("lightPreset");
-const keyDir = document.getElementById("keyDir");
-const keyIntensity = document.getElementById("keyIntensity");
-const keyColor = document.getElementById("keyColor");
-const fillIntensity = document.getElementById("fillIntensity");
-const fillColor = document.getElementById("fillColor");
-const rimIntensity = document.getElementById("rimIntensity");
-const rimColor = document.getElementById("rimColor");
-const ambIntensity = document.getElementById("ambIntensity");
-const ambColor = document.getElementById("ambColor");
-const hemiIntensity = document.getElementById("hemiIntensity");
-const hemiSky = document.getElementById("hemiSky");
-const hemiGround = document.getElementById("hemiGround");
-const btnResetLights = document.getElementById("btnResetLights");
-
-/* Gallery DOM */
-const btnSaveGallery = document.getElementById("btnSaveGallery");
-const poseGallery = document.getElementById("poseGallery");
-const btnRenamePose = document.getElementById("btnRenamePose");
-const btnDeletePose = document.getElementById("btnDeletePose");
-const btnClearGallery = document.getElementById("btnClearGallery");
-
-/* Presets DOM */
-const presetGallery = document.getElementById("presetGallery");
-const btnPresetApply = document.getElementById("btnPresetApply");
-const btnPresetSave = document.getElementById("btnPresetSave");
-
-/* ✅ Reference DOM */
+/* Reference Image DOM (NEW) */
 const btnRefLoad = document.getElementById("btnRefLoad");
 const btnRefClear = document.getElementById("btnRefClear");
 const fileRef = document.getElementById("fileRef");
@@ -235,6 +119,12 @@ const refSize = document.getElementById("refSize");
 const refOffsetX = document.getElementById("refOffsetX");
 const refOffsetY = document.getElementById("refOffsetY");
 const refFlipX = document.getElementById("refFlipX");
+
+const btnRefFitCenter = document.getElementById("btnRefFitCenter");
+const btnRefFitLeft = document.getElementById("btnRefFitLeft");
+const btnRefFitRight = document.getElementById("btnRefFitRight");
+const btnRefHalf = document.getElementById("btnRefHalf");
+const btnRefFull = document.getElementById("btnRefFull");
 
 /* ---------------------------- Helpers ---------------------------- */
 const showToast = makeToast(toastEl);
@@ -323,94 +213,6 @@ try {
 
   // Background selector initial
   setBackgroundTone(scene, bgTone?.value || "midnight");
-
-  /* ✅ Reference overlay (camera pinned) */
-  const reference = createReferenceOverlay(scene, camera);
-
-  function syncReferenceUIFromState() {
-    if (!STATE.reference) return;
-    if (refShow) refShow.checked = !!STATE.reference.enabled;
-    if (refOpacity) refOpacity.value = String(STATE.reference.opacity ?? 0.65);
-    if (refSize) refSize.value = String(STATE.reference.size ?? 3.2);
-    if (refOffsetX) refOffsetX.value = String(STATE.reference.offsetX ?? 0);
-    if (refOffsetY) refOffsetY.value = String(STATE.reference.offsetY ?? 0);
-    if (refFlipX) refFlipX.checked = !!STATE.reference.flipX;
-  }
-
-  function applyReferenceStateToOverlay() {
-    if (!STATE.reference) return;
-
-    reference.setOpacity(STATE.reference.opacity);
-    reference.setSize(STATE.reference.size);
-    reference.setOffset(STATE.reference.offsetX, STATE.reference.offsetY);
-    reference.setFlipX(STATE.reference.flipX);
-
-    // Only show if enabled + has image
-    reference.setVisible(!!STATE.reference.enabled && reference.hasImage());
-  }
-
-  async function loadReferenceFile(file) {
-    if (!file) return;
-    try {
-      await reference.setImageFile(file);
-      STATE.reference.enabled = true;
-      applyReferenceStateToOverlay();
-      syncReferenceUIFromState();
-      showToast("Reference loaded");
-    } catch (e) {
-      console.warn(e);
-      showToast("Reference load failed", 1600);
-    }
-  }
-
-  btnRefLoad?.addEventListener("click", () => fileRef?.click?.());
-  fileRef?.addEventListener("change", async (e) => {
-    const file = e.target?.files?.[0];
-    if (!file) return;
-    await loadReferenceFile(file);
-    fileRef.value = "";
-  });
-
-  btnRefClear?.addEventListener("click", () => {
-    reference.clear();
-    STATE.reference.enabled = false;
-    syncReferenceUIFromState();
-    applyReferenceStateToOverlay();
-    showToast("Reference cleared");
-  });
-
-  refShow?.addEventListener("change", () => {
-    STATE.reference.enabled = !!refShow.checked;
-    applyReferenceStateToOverlay();
-  });
-
-  refOpacity?.addEventListener("input", () => {
-    STATE.reference.opacity = Number(refOpacity.value);
-    applyReferenceStateToOverlay();
-  });
-
-  refSize?.addEventListener("input", () => {
-    STATE.reference.size = Number(refSize.value);
-    applyReferenceStateToOverlay();
-  });
-
-  function applyOffsetsFromUI() {
-    STATE.reference.offsetX = Number(refOffsetX?.value ?? 0);
-    STATE.reference.offsetY = Number(refOffsetY?.value ?? 0);
-    applyReferenceStateToOverlay();
-  }
-
-  refOffsetX?.addEventListener("input", applyOffsetsFromUI);
-  refOffsetY?.addEventListener("input", applyOffsetsFromUI);
-
-  refFlipX?.addEventListener("change", () => {
-    STATE.reference.flipX = !!refFlipX.checked;
-    applyReferenceStateToOverlay();
-  });
-
-  // init reference UI + overlay
-  syncReferenceUIFromState();
-  applyReferenceStateToOverlay();
 
   /* Character */
   function makeMaterial(colorHex) {
@@ -838,6 +640,221 @@ try {
     fileModel.value = "";
   });
 
+  /* ---------------------------- Reference Image (NEW) ---------------------------- */
+
+  // ensure camera is in scene graph so camera children render
+  try { if (!camera.parent) scene.add(camera); } catch {}
+
+  // reference state
+  if (!STATE.reference) {
+    STATE.reference = {
+      enabled: false,
+      opacity: 0.65,
+      size: 3.2,
+      offsetX: 0,
+      offsetY: 0,
+      flipX: false,
+      url: "",
+      aspect: 1
+    };
+  }
+
+  const refGroup = new THREE.Group();
+  refGroup.name = "reference_overlay_group";
+  refGroup.userData.nonPickable = true;
+  refGroup.visible = false;
+  camera.add(refGroup);
+
+  const refMat = new THREE.MeshBasicMaterial({
+    color: 0xffffff,
+    transparent: true,
+    opacity: STATE.reference.opacity ?? 0.65,
+    depthTest: false,
+    depthWrite: false
+  });
+
+  const refGeo = new THREE.PlaneGeometry(1, 1);
+  const refMesh = new THREE.Mesh(refGeo, refMat);
+  refMesh.name = "reference_overlay_mesh";
+  refMesh.userData.nonPickable = true;
+  refMesh.renderOrder = 9999;
+  refGroup.add(refMesh);
+
+  // place it in front of camera
+  const REF_Z = -3.0;
+
+  function updateReferenceTransform() {
+    const r = STATE.reference;
+
+    const aspect = Number(r.aspect) || 1;
+    const size = Number(r.size) || 3.2;
+
+    // scale plane to aspect * size
+    const sx = size * aspect * (r.flipX ? -1 : 1);
+    const sy = size;
+
+    refMesh.scale.set(sx, sy, 1);
+    refMesh.position.set(Number(r.offsetX) || 0, Number(r.offsetY) || 0, REF_Z);
+
+    refMat.opacity = clamp(Number(r.opacity ?? 0.65), 0, 1);
+    refGroup.visible = !!r.enabled;
+  }
+
+  function syncReferenceUIFromState() {
+    if (!STATE.reference) return;
+    const r = STATE.reference;
+
+    if (refShow) refShow.checked = !!r.enabled;
+    if (refOpacity) refOpacity.value = String(r.opacity ?? 0.65);
+    if (refSize) refSize.value = String(r.size ?? 3.2);
+    if (refOffsetX) refOffsetX.value = String(r.offsetX ?? 0);
+    if (refOffsetY) refOffsetY.value = String(r.offsetY ?? 0);
+    if (refFlipX) refFlipX.checked = !!r.flipX;
+  }
+
+  function applyReferenceUIToState() {
+    if (!STATE.reference) return;
+    const r = STATE.reference;
+
+    if (refShow) r.enabled = !!refShow.checked;
+    if (refOpacity) r.opacity = Number(refOpacity.value);
+    if (refSize) r.size = Number(refSize.value);
+    if (refOffsetX) r.offsetX = Number(refOffsetX.value);
+    if (refOffsetY) r.offsetY = Number(refOffsetY.value);
+    if (refFlipX) r.flipX = !!refFlipX.checked;
+
+    updateReferenceTransform();
+    renderer.render(scene, camera);
+  }
+
+  function clearReferenceImage() {
+    const r = STATE.reference;
+    if (refMat.map) {
+      try { refMat.map.dispose?.(); } catch {}
+    }
+    refMat.map = null;
+    refMat.needsUpdate = true;
+
+    r.url = "";
+    r.aspect = 1;
+    r.enabled = false;
+
+    updateReferenceTransform();
+    syncReferenceUIFromState();
+    renderer.render(scene, camera);
+    showToast("Reference cleared");
+  }
+
+  async function loadReferenceFile(file) {
+    if (!file) return;
+
+    const url = URL.createObjectURL(file);
+    try {
+      const tex = await new Promise((resolve, reject) => {
+        const loader = new THREE.TextureLoader();
+        loader.load(url, resolve, undefined, reject);
+      });
+
+      // modern three uses colorSpace
+      if ("colorSpace" in tex) tex.colorSpace = THREE.SRGBColorSpace;
+
+      refMat.map = tex;
+      refMat.needsUpdate = true;
+
+      const img = tex.image;
+      const w = img?.width || 1;
+      const h = img?.height || 1;
+
+      STATE.reference.url = url; // keep for debugging (object URL)
+      STATE.reference.aspect = w / h;
+      STATE.reference.enabled = true;
+
+      // keep UI defaults if blank
+      if (refShow) refShow.checked = true;
+      if (refOpacity && !refOpacity.value) refOpacity.value = "0.65";
+
+      updateReferenceTransform();
+      syncReferenceUIFromState();
+      renderer.render(scene, camera);
+
+      showToast("Reference loaded");
+    } catch (e) {
+      console.warn(e);
+      showToast("Reference load failed", 1600);
+      try { URL.revokeObjectURL(url); } catch {}
+    }
+  }
+
+  btnRefLoad?.addEventListener("click", () => fileRef?.click?.());
+  fileRef?.addEventListener("change", async (e) => {
+    const file = e.target?.files?.[0];
+    if (!file) return;
+    await loadReferenceFile(file);
+    fileRef.value = "";
+  });
+
+  btnRefClear?.addEventListener("click", clearReferenceImage);
+
+  [refShow, refOpacity, refSize, refOffsetX, refOffsetY, refFlipX].forEach((el) => {
+    el?.addEventListener("input", applyReferenceUIToState);
+    el?.addEventListener("change", applyReferenceUIToState);
+  });
+
+  // Fit buttons
+  function refFitCenter() {
+    STATE.reference.offsetX = 0;
+    STATE.reference.offsetY = 0;
+    syncReferenceUIFromState();
+    updateReferenceTransform();
+    renderer.render(scene, camera);
+  }
+
+  function refFitLeft() {
+    const aspect = Number(STATE.reference.aspect) || 1;
+    const size = Number(STATE.reference.size) || 3.2;
+    STATE.reference.offsetX = -(size * aspect) * 0.55;
+    STATE.reference.offsetY = 0;
+    syncReferenceUIFromState();
+    updateReferenceTransform();
+    renderer.render(scene, camera);
+  }
+
+  function refFitRight() {
+    const aspect = Number(STATE.reference.aspect) || 1;
+    const size = Number(STATE.reference.size) || 3.2;
+    STATE.reference.offsetX = (size * aspect) * 0.55;
+    STATE.reference.offsetY = 0;
+    syncReferenceUIFromState();
+    updateReferenceTransform();
+    renderer.render(scene, camera);
+  }
+
+  function refHalfSize() {
+    STATE.reference.size = Math.max(1, (Number(STATE.reference.size) || 3.2) * 0.5);
+    syncReferenceUIFromState();
+    updateReferenceTransform();
+    renderer.render(scene, camera);
+  }
+
+  function refFullSize() {
+    STATE.reference.size = 3.2;
+    STATE.reference.offsetX = 0;
+    STATE.reference.offsetY = 0;
+    syncReferenceUIFromState();
+    updateReferenceTransform();
+    renderer.render(scene, camera);
+  }
+
+  btnRefFitCenter?.addEventListener("click", () => { refFitCenter(); showToast("Reference centered"); });
+  btnRefFitLeft?.addEventListener("click", () => { refFitLeft(); showToast("Reference left"); });
+  btnRefFitRight?.addEventListener("click", () => { refFitRight(); showToast("Reference right"); });
+  btnRefHalf?.addEventListener("click", () => { refHalfSize(); showToast("Reference half size"); });
+  btnRefFull?.addEventListener("click", () => { refFullSize(); showToast("Reference reset"); });
+
+  // init reference UI + transform
+  syncReferenceUIFromState();
+  updateReferenceTransform();
+
   /* ---------------------------- Pose I/O ---------------------------- */
 
   function serializePoseForGallery() {
@@ -1019,6 +1036,7 @@ try {
     if (hemiSky) lights.hemi.color.setHex(colorInputToHex(hemiSky.value));
     if (hemiGround) lights.hemi.groundColor.setHex(colorInputToHex(hemiGround.value));
 
+    // key direction dropdown
     if (keyDir) setKeyDirectionByName(lights, keyDir.value);
 
     renderer.render(scene, camera);
@@ -1029,6 +1047,7 @@ try {
     const preset = String(name || "studio");
     applyLightingPreset(lights, preset);
 
+    // keep direction dropdown coherent for "studio"
     if (keyDir && preset === "studio") keyDir.value = "front_right";
 
     syncLightingUIFromLights();
@@ -1052,6 +1071,7 @@ try {
     setLightingPreset(preset);
   });
 
+  // init lighting UI from current scene defaults
   syncLightingUIFromLights();
 
   /* ---------------------------- UI wiring ---------------------------- */
@@ -1149,6 +1169,7 @@ try {
       return;
     }
 
+    // modes
     if (k === "1" || k === "2" || k === "3" || k === "4") {
       modes.handleShortcut(k);
       return;
@@ -1164,12 +1185,14 @@ try {
       return;
     }
 
+    // Ctrl/Cmd + S => save to gallery
     if ((e.ctrlKey || e.metaKey) && k === "s") {
       e.preventDefault();
       gallery.saveCurrentPoseToGallery({ withToast: true });
       return;
     }
 
+    // Ctrl/Cmd + M => toggle symmetry quickly
     if ((e.ctrlKey || e.metaKey) && k === "m") {
       e.preventDefault();
       SYM.enabled = !SYM.enabled;
@@ -1217,6 +1240,7 @@ try {
   if (gridHelper) gridHelper.visible = !!STATE.showGrid;
   if (axesHelper) axesHelper.visible = !!STATE.showAxes;
 
+  // Init lighting preset from dropdown (keeps UI + scene in sync)
   setLightingPreset(lightPreset?.value || "studio");
 
   showToast("Ready. Click a joint or prop to pose.");
