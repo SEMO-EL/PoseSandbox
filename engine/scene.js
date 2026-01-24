@@ -189,7 +189,6 @@ export function createReferenceOverlay(scene, camera) {
   let _flipX = false;
 
   function _applyScaleAndOffset() {
-    // Sprite scale is in world units; keep height = _size, width = _size * aspect
     const h = Math.max(0.2, _size);
     const w = Math.max(0.2, _size * (_aspect || 1));
     sprite.scale.set(w, h, 1);
@@ -274,7 +273,6 @@ export function createReferenceOverlay(scene, camera) {
 
     _url = URL.createObjectURL(file);
 
-    // Load as HTMLImageElement (fast + compatible)
     const img = new Image();
     img.decoding = "async";
     img.loading = "eager";
@@ -302,7 +300,6 @@ export function createReferenceOverlay(scene, camera) {
     material.needsUpdate = true;
   }
 
-  // init
   _applyOpacity();
   _applyScaleAndOffset();
 
@@ -351,32 +348,36 @@ export function createScene({
   orbit.dampingFactor = 0.06;
   orbit.target.set(0, 1.05, 0);
 
-  /* ===================== ✅ FIX: Prevent zooming into blank screen ===================== */
-  // Without bounds, users can zoom far enough that everything is clipped by camera.far.
-  // Keep values sane for a character posing scene (still far enough for props).
-  orbit.minDistance = 1.2;
-  orbit.maxDistance = 40;
+  /* ===================== ✅ Smooth zoom tuning + safe bounds ===================== */
+  // Smoothness: reduce zoom aggressiveness so wheel doesn't jump between "too close" and "too far".
+  // Bounds: keep distance range "artist-friendly" for a single character scene.
+  orbit.zoomSpeed = 0.55;     // smoother (default ~1.0 feels jumpy on many mice/trackpads)
+  orbit.minDistance = 2.0;    // not nose-inside-the-model
+  orbit.maxDistance = 18.0;   // far enough to frame full body + props without losing the scene
 
-  // Extra guard: if maxDistance ever changes elsewhere, never let distance exceed camera.far
-  // This prevents "blank screen" even if someone later sets maxDistance too high.
+  // Extra guard: never allow distance to exceed camera.far safety margin.
+  // IMPORTANT: do it softly (lerp) so it doesn't "snap" and feel harsh.
   let _clampGuard = false;
+  const _tmpDir = new THREE.Vector3();
+  const _tmpPos = new THREE.Vector3();
+
   orbit.addEventListener("change", () => {
     if (_clampGuard) return;
     _clampGuard = true;
     try {
       const d = camera.position.distanceTo(orbit.target);
-      const hardMax = Math.max(2, (camera.far || 200) * 0.92);
-
-      // Prefer orbit.maxDistance if defined; still never exceed camera.far safety range.
+      const hardMax = Math.max(orbit.minDistance + 0.5, (camera.far || 200) * 0.85);
       const targetMax = Math.min(
         Number.isFinite(orbit.maxDistance) ? orbit.maxDistance : Infinity,
         hardMax
       );
 
       if (d > targetMax) {
-        const dir = camera.position.clone().sub(orbit.target).normalize();
-        camera.position.copy(orbit.target.clone().add(dir.multiplyScalar(targetMax)));
-        // no orbit.update() here (avoid recursion); the next frame will settle.
+        _tmpDir.copy(camera.position).sub(orbit.target).normalize();
+        _tmpPos.copy(orbit.target).add(_tmpDir.multiplyScalar(targetMax));
+
+        // Soft approach: move partway toward the clamped position (feels smooth, no jump).
+        camera.position.lerp(_tmpPos, 0.18);
       }
     } catch {
       // ignore
@@ -384,7 +385,7 @@ export function createScene({
       _clampGuard = false;
     }
   });
-  /* ================================================================================ */
+  /* ============================================================================ */
 
   // Lighting (store refs for UI)
   const hemi = new THREE.HemisphereLight(0x9bb2ff, 0x151a22, 0.35);
@@ -474,18 +475,14 @@ export function createScene({
     axesHelper.visible = !!STATE.showAxes;
   }
 
-  /* ===================== ✅ Additive feature: create & return reference overlay ===================== */
-  // This does NOT break anything:
-  // - The sprite starts hidden until an image is set
-  // - It is non-pickable
-  // - Returning extra fields is safe for existing callers
+  /* ===================== ✅ Additive: create & return reference overlay ===================== */
   let referenceOverlay = null;
   try {
     referenceOverlay = createReferenceOverlay(scene, camera);
   } catch {
     referenceOverlay = null;
   }
-  /* =============================================================================================== */
+  /* ======================================================================================== */
 
   return {
     scene,
